@@ -1,0 +1,38 @@
+/* ===================================================================
+TABLE
+=================================================================== */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  /* border: 1px solid var(--glass-border); */
+}
+.table-alt {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.table-alt th,
+.table-alt td {
+  padding: 14px 16px;
+  text-align: left;
+}
+.table-alt th {
+  font-weight: 600;
+  /* color: var(--text-muted); */
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  background: rgba(28, 43, 83, 0.05);
+  /* border-bottom: 1px solid var(--glass-border); */
+}
+.table-alt tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.4);
+}
+.table-alt tbody tr:nth-child(odd) {
+  background: transparent;
+}
+.table-alt tbody tr:hover {
+  background: rgba(28, 43, 83, 0.05);
+}
