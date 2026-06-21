@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id                 Int         @id @default(autoincrement())
+  name               String      @unique
+  description        String?
+  isActive           Boolean     @default(true)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  assignedComplaints Complaint[]
+  users              User[]
+}
+
+model User {
+  id                           Int                  @id @default(autoincrement())
+  username                     String?
+  fullname                     String?
+  firstName                    String?
+  middleName                   String?
+  lastName                     String?
+  contactNumber                String?
+  address                      String?
+  name                         String
+  email                        String               @unique
+  password                     String
+  role                         Role                 @default(CITIZEN)
+  isActive                     Boolean              @default(true)
+  departmentId                 Int?
+  createdAt                    DateTime             @default(now())
+  updatedAt                    DateTime             @updatedAt
+  deletedAt                    DateTime?
+  assignedByComplaints         Complaint[]          @relation("AssignedByComplaints")
+  assignedComplaints           Complaint[]          @relation("AssignedComplaints")
+  complainantComplaints        Complaint[]          @relation("ComplainantComplaints")
+  complaintsCreated            Complaint[]          @relation("CreatedComplaints")
+  activities                   ComplaintActivity[]
+  complaintRejectionsApproved  ComplaintRejection[] @relation("ApprovedRejections")
+  complaintRejectionsRequested ComplaintRejection[] @relation("RequestedRejections")
+  statusLogs                   ComplaintStatusLog[]
+  notifications                Notification[]
+  sessions                     Session[]
+  tokens                       Token[]
+  department                   Department?          @relation(fields: [departmentId], references: [id])
+}
+
+model Complaint {
+  id                   Int                   @id @default(autoincrement())
+  referenceNo          String                @unique
+  title                String?
+  category             ComplaintCategory
+  subject              String
+  description          String
+  barangay             String?
+  subdivisionVillage   String?
+  streetName           String?
+  buildingFloor        String?
+  attachmentUrl        String?
+  status               ComplaintStatus       @default(PENDING)
+  priority             ComplaintPriority     @default(NORMAL)
+  createdById          Int
+  complainantId        Int?
+  assignedById         Int?
+  assignedToId         Int?
+  assignedDepartmentId Int?
+  assignedAt           DateTime?
+  resolvedAt           DateTime?
+  resolutionNotes      String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  deletedAt            DateTime?
+  assignedBy           User?                 @relation("AssignedByComplaints", fields: [assignedById], references: [id])
+  assignedDepartment   Department?           @relation(fields: [assignedDepartmentId], references: [id])
+  assignedTo           User?                 @relation("AssignedComplaints", fields: [assignedToId], references: [id])
+  complainant          User?                 @relation("ComplainantComplaints", fields: [complainantId], references: [id])
+  createdBy            User                  @relation("CreatedComplaints", fields: [createdById], references: [id])
+  activities           ComplaintActivity[]
+  attachments          ComplaintAttachment[]
+  complaintRejections  ComplaintRejection[]
+  statusLogs           ComplaintStatusLog[]
+  notifications        Notification[]
+
+  @@index([referenceNo])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([assignedToId])
+  @@index([assignedDepartmentId])
+  @@index([createdById])
+  @@index([complainantId])
+}
+
+model ComplaintAttachment {
+  id           Int       @id @default(autoincrement())
+  complaintId  Int
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  createdAt    DateTime  @default(now())
+  complaint    Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+}
+
+model ComplaintRejection {
+  id             Int             @id @default(autoincrement())
+  complaintId    Int
+  requestedById  Int
+  reason         String
+  rejectionNotes String?
+  status         RejectionStatus @default(PENDING)
+  approvedById   Int?
+  approvedAt     DateTime?
+  createdAt      DateTime        @default(now())
+  approvedBy     User?           @relation("ApprovedRejections", fields: [approvedById], references: [id])
+  complaint      Complaint       @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  requestedBy    User            @relation("RequestedRejections", fields: [requestedById], references: [id])
+}
+
+model ComplaintActivity {
+  id          Int          @id @default(autoincrement())
+  complaintId Int
+  userId      Int
+  type        ActivityType
+  remarks     String?
+  createdAt   DateTime     @default(now())
+  complaint   Complaint    @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@index([complaintId])
+}
+
+model ComplaintStatusLog {
+  id          Int              @id @default(autoincrement())
+  complaintId Int
+  changedById Int
+  fromStatus  ComplaintStatus?
+  toStatus    ComplaintStatus
+  remarks     String?
+  createdAt   DateTime         @default(now())
+  changedBy   User             @relation(fields: [changedById], references: [id])
+  complaint   Complaint        @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  @@index([complaintId])
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  complaintId Int?
+  title       String
+  message     String
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  deletedAt   DateTime?
+  actorId     Int?
+  type        NotificationType @default(INFO)
+  link        String?
+  meta        Json?
+  complaint   Complaint?       @relation(fields: [complaintId], references: [id])
+  user        User             @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionId    String   @unique
+  userId       Int
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  lastActivity DateTime @updatedAt
+  expiresAt    DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Token {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  tokenHash String
+  type      TokenType
+  used      Boolean   @default(false)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  CITIZEN
+  STAFF
+  ADMIN
+  SUPERADMIN
+}
+
+enum ComplaintStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+  CLOSED
+}
+
+enum ComplaintPriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+enum ComplaintCategory {
+  WASTE_MANAGEMENT
+  INFRASTRUCTURE_ROADS
+  UTILITIES
+  PUBLIC_ORDER_ZONING
+  BUREAUCRATIC_DELAYS
+}
+
+enum RejectionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TokenType {
+  RESET_PASSWORD
+  EMAIL_VERIFY
+}
+
+enum ActivityType {
+  CREATED
+  ASSIGNED
+  STATUS_CHANGED
+  RESOLVED
+  REJECTION_REQUESTED
+  REJECTION_APPROVED
+  COMMENTED
+}
+
+enum NotificationType {
+  INFO
+  TASK
+  COMPLAINT
+  SYSTEM
+}
