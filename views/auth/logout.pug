@@ -1,0 +1,21 @@
+extends ../partials/head
+
+block content
+  //- include ../layout
+
+  .auth-container
+    .auth-card.logout-card
+      .auth-header
+        h1 Logout
+        p Are you sure you want to sign out?
+      form(
+        method="POST" 
+        action="/auth/logout"
+        )
+        button.auth-btn.danger-btn(type="submit") Logout
+      .auth-footer
+        p
+          a(href="/auth/login") Back to Login
+
+  include ../partials/footer
+  

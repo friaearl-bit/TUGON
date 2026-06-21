@@ -1,0 +1,48 @@
+// OVERLAY
+#overlay.overlay
+// LEFT SIDEBAR (Burger Menu)
+aside#sidebarLeft.sidebar-left
+  .sidebar-header
+    a(href="/")
+      .sidebar-brand
+        img(
+          alt="TUGON Logo" 
+          src="/images/logo.png"
+          )
+        .sidebar-brand-text
+          h3 TUGON
+          p Municipal Complaint System
+    #closeLeftSidebar.sidebar-close
+      i(data-lucide="x")
+  nav.sidebar-nav
+    ul
+      li
+        a(class=(activePath === '/' ? 'active' : '') href='/')
+          i(data-lucide="house")
+          | Home
+      li
+        a(class=(activePath === '/complaints/my' ? 'active' : '') href='/complaints/my')
+          i(data-lucide="file-text")
+          | File Complaint
+      //- li
+      //-   a(class=(activePath === '/dashboard' ? 'active' : '') href='/dashboard')
+      //-     i(data-lucide="search")
+      //-     | Track Complaint
+      li
+        a(class=(activePath === '/dashboard' ? 'active' : '') href='/dashboard')
+          i(data-lucide="clock")
+          | My Complaints
+      li
+        a(class=(activePath === '/about' ? 'active' : '') href='/about')
+          i(data-lucide="info")
+          | About
+      li
+        a(class=(activePath === '/help' ? 'active' : '') href='/help')
+          i(data-lucide="circle-question-mark")
+          | Help
+      li
+        a(class=(activePath === '/settings' ? 'active' : '') href='/settings')
+          i(data-lucide="settings")
+          | Settings
+  .sidebar-footer
+    p © 2026 TUGON - All complaints are public record

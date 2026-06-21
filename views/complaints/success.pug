@@ -1,0 +1,56 @@
+//- extends ../layout
+
+block content
+  include ../layout
+
+  main.success-page
+
+    .success-card
+
+      .success-icon
+        //- i(data-lucide="circle-check-big")
+        | ✓
+
+      h1.success-title
+        | Complaint Successfully Submitted
+
+      p.success-text
+        | Your complaint has been recorded and forwarded to the appropriate office.
+
+      .reference-box
+
+        p Reference Number
+
+        h2.reference-no= referenceNo || "N/A"
+
+      .info-grid
+
+        .info-item
+          span Email Notification
+          strong= email
+
+        .info-item
+          span Estimated Response
+          strong 3–5 Working Days
+
+        .info-item
+          span Status
+          strong Pending Review
+
+      .action-buttons
+
+        a.btn-primary(href="/complaints/new")
+          | Submit Another Complaint
+
+        a.btn-secondary(href="/complaints/my")
+          | View My Complaints
+
+        a.btn-secondary(href="/")
+          | Return Home
+
+      .footer-note
+        small
+          | © MCRS · Municipal Complaint Redress System · All submissions are logged for accountability
+
+  include ../partials/toast
+  include ../partials/footer

@@ -1,0 +1,355 @@
+//- extends ../layout
+
+block content
+  include ../layout
+  
+  .main-header
+    h1.title Submit a complaint
+    p.subtitle
+      | Use this form to report a civic issue. Your complaint will be logged into the official records and forwarded to the appropriate municipal department for review and resolution. Please provide accurate details to ensure timely action on your report.
+  // Progress Tracker
+  .stepper-container
+    #step1-indicator.step.active
+      .circle 1
+      .label Issue details
+    #line1-indicator.line
+    #step2-indicator.step
+      .circle 2
+      .label Contact Info
+    #line2-indicator.line
+    #step3-indicator.step
+      .circle 3
+      .label Review
+  .grid-container
+    form#complaintForm.main-form-panel(
+      enctype="multipart/form-data" 
+      method="POST" 
+      action="/complaints/new"
+      )
+      // Error Messages
+      if flashes && flashes.length
+        .alert.alert-danger
+          ul
+            each f in flashes
+              li= f.message
+      // When this page is active, the progress tracker lights the 1
+      #panel-step-1.step-panel.show-view
+        .form-group
+          // Complaint category
+          label(for="category") Category
+          select#complaintCategory(
+            required=""
+            tabindex="1" 
+            name="category"
+            )
+            option(value="") Select a Category...
+            option(value="WASTE_MANAGEMENT") Waste Management
+            option(value="INFRASTRUCTURE_ROADS") Infrastructure & Roads
+            option(value="UTILITIES") Utilities
+            option(value="PUBLIC_ORDER_ZONING") Public Order & Zoning
+            option(value="BUREAUCRATIC_DELAYS") Bureaucratic Delays
+        // Subject section(dependent on category)
+        .form-group
+          label(for="subject") Subject
+          select#complaintSubject(
+            tabindex="1" 
+            name="subject"
+            )
+            option(value="") Brief one-line description of the issue
+        // Text area for complaint description
+        .form-group
+          label(for="description") Description
+          textarea#complaintDescription(
+            tabindex="1" 
+            placeholder="provide the full detail on what the issue and when did you notice it..." 
+            name="description"
+            )
+          #live-char-count.char-count 0 Char
+        // Address section
+        .form-group.address-container
+          label(for="address-summary") Location / Address
+          .input-with-icon
+            span.loc-icon 📍
+            //- input#address-summary(
+              type="text"
+            textarea#address-summary(
+              tabindex="1"
+              readonly=""
+              placeholder="Location / Address"
+              )
+            // Textare for summarized address
+          // barangay dropdown
+          #address-form-block.address-fields-box(style="display: none;")
+            .form-group-sub
+              label(for="barangay") Barangay
+              select#barangay(
+                tabindex="1" 
+                name="barangay"
+                )
+                option(value="") Select Barangay
+                option(value="Acacia") Acacia
+                option(value="Flores") Flores
+                option(value="Hulo") Hulo
+            // subdivision or village section (dependent on the barangay)
+            .form-group-sub
+              label(for="subdivisionVillage") Subdivision or Village
+              select(
+                tabindex="1" 
+                name="subdivisionVillage" 
+                id="Subdivision_Village"
+                )
+                option(value="") Select Subdivision or Village
+            // Street name text area, limits the input to posiive number and words
+            .form-group-sub
+              label(for="streetName") Street Name
+              input#streetName(
+                placeholder="e.g., Maple St." 
+                pattern="[a-zA-Z0-9\s]+" 
+                name="streetName" 
+                type="text" 
+                tabindex="1"
+                )
+            // Building floor text area, limits the input to posiive number and words
+            .form-group-sub
+              label(for="buildingFloor") Building / Floor / Unit #
+              input#buildingFloor(
+                placeholder="e.g., 3rd Floor, Rm 302" 
+                name="buildingFloor" 
+                type="text" 
+                tabindex="1"
+                )
+                //- pattern="[a-zA-Z0-9\s]+" 
+            // Button to close the address after filling up
+            button#closeAddressBtn.done-btn(
+              type="button" 
+              tabindex="1"
+              ) Done
+        // priority section
+        .form-group
+          label Priority
+          .priority-container
+            button.prio-btn(
+              data-value="LOW" 
+              type="button" 
+              tabindex="1"
+              ) Low
+            button.prio-btn(
+              data-value="NORMAL" 
+              type="button" 
+              tabindex="1"
+              ) Normal
+            button.prio-btn(
+              data-value="HIGH" 
+              type="button" 
+              tabindex="1"
+              ) High
+            button.prio-btn(
+              data-value="CRITICAL" 
+              type="button" 
+              tabindex="1"
+              ) Critical
+          input#complaintPriority(
+            value="" 
+            name="priority" 
+            type="hidden" 
+            tabindex="1"
+            )
+        // Attachment section for additional info
+        .form-group
+          label.title-label Attachment
+          label.dropzone-label(for="attachment")
+            span.upload-icon ⤒
+            p.main-text Drag & Drop photos, Documents or click the browser
+            p.sub-text Max 10mb per file: jpg png pdf mp4
+            input#attachment.hidden-file-input(
+              type="file"
+              name="attachments"
+              accept="image/*,application/pdf,video/mp4"
+              multiple
+              tabindex="1")
+          //‑‑‑ helpers for JS -------------------------------------------------
+          ul#file-list(style="list-style: none;")
+          div#file-counter 0 file(s) selected
+          //- button#upload-btn(disabled) Upload
+
+          
+        
+
+        // After clicking the "continue" button the page would go to page 2 and the progress tracker would also update
+        .action-row
+          button#goToStep2.continue-btn(
+            type="button" 
+            tabindex="1"
+            ) Continue ➔
+      // page 2
+      #panel-step-2.step-panel
+        .form-group
+          // Name section
+          .form-group.name-container
+            label(for="fullName") Full Name
+            input#fullName(
+              type="text" 
+              tabindex="1" 
+              readonly="" 
+              placeholder="Click to enter your legal name"
+              )
+          // Name sub-category dropdown fields
+          #name-form-block.name-fields-box(style="display: none;")
+            .form-group-sub
+              label(for="surname") Surname
+              input#surname(
+                required="" 
+                placeholder="e.g., Dela Cruz" 
+                type="text" 
+                tabindex="1"
+                )
+              span#surnameHelp
+            .form-group-sub
+              label(for="givenName") Given Name
+              input#givenName(
+                required="" 
+                placeholder="e.g., Juan" 
+                type="text" 
+                tabindex="1"
+                )
+              span#givenNameHelp
+            .form-group-sub
+              label(for="middleName") Middle Name (Optional)
+              input#middleName(
+                placeholder="e.g., Santos" 
+                type="text" 
+                tabindex="1"
+                )
+              span#middleNameHelp
+            .form-group-sub
+              label(for="suffix") Suffix (Optional)
+              input#suffix(
+                placeholder="e.g., Jr., III" 
+                type="text" 
+                tabindex="1"
+                )
+              span#suffixHelp
+            // Button to close the name fields block
+            button#closeNameBtn.done-btn(
+              type="button" 
+              tabindex="1"
+              ) Done
+        // Email section with pattern validation
+        .form-group
+          label(for="emailAddress") Email Address
+          // <input tabindex="1" type="email" id="emailAddress" name="emailAddress" pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$" placeholder="user@gmail.com" required>
+          input#emailAddress(
+            placeholder="you@exmaple.com" 
+            name="emailAddress" 
+            type="email" 
+            tabindex="1"
+            )
+          // <input tabindex="1" type="email" id="emailAddress" name="emailAddress" pattern="/^((?!\.)[\w\-\._]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/u" placeholder="you@exmaple.com" required>
+          span#emailAddressHelp
+        // Contanct number section with pattern validation and preformat
+        .form-group
+          label(for="contactNo") Contact No.
+          // <input tabindex="1" type="text" id="contactNo" name="contactNo" value="+63 " pattern="^\+63\s9\d{2}-\d{3}-\d{4}$" placeholder="+63 917-XXX-XXXX" required>
+          input#contactNo(
+            required="" 
+            placeholder="+63 917-XXX-XXXX" 
+            value="+63 " 
+            name="contactNo" 
+            type="text" 
+            tabindex="1"
+            )
+          span#contactNoHelp
+        .info-banner
+          .info-banner-icon ⓘ
+          div
+            | Your Contact Information is kept confidential. It is used only for complaints it is not shared by third Parties or public in any official record.
+        // Button for back and continue (updates the progress tracker too)
+        .action-row.split
+          button#goToStep1.back-btn(
+            type="button" 
+            tabindex="1"
+            ) ↵ Back
+          button#goToStep3.continue-btn(
+            type="button" 
+            tabindex="1"
+            ) Continue ➔
+      // Third page
+      #panel-step-3.step-panel
+        .review-header Review & Confirm
+        // Review Section
+        table.review-table
+          tbody
+            //- tr
+            //-   td.field-label Case ID
+            //-   td#review-case-id.field-value
+            tr
+              td.field-label Category
+              td#review-category.field-value —
+            tr
+              td.field-label Subject
+              td#review-subject.field-value —
+            tr
+              td.field-label Location
+              td#review-location.field-value —
+            tr
+              td.field-label Priority
+              td#review-priority.field-value —
+            tr
+              td.field-label Description
+              td#review-description.field-value —
+            tr
+              td.field-label Contact
+              td#review-contact.field-value —
+            tr
+            td.field-label Attachments
+              td
+                ul#file-list-review.field-value(style="list-style: none;")
+        // Back and submit button
+        .action-row.split
+          button#goToStep2P3.back-btn(
+            type="button" 
+            tabindex="1"
+            ) ↵ Back
+          button.submit-btn(
+            type="submit" 
+            tabindex="1"
+            ) Continue ➔
+    .sidebar-panel
+      .info-card
+        // Service and target time
+        h3 Service level targets
+        table.sla-table
+          tbody
+            tr
+              td Water and Sewer
+              td.time-col 24 Hours
+            tr
+              td Sanitation
+              td.time-col 1-2 Days
+            tr
+              td Street Lighting
+              td.time-col 3-5 Days
+            tr
+              td Road or Paving
+              td.time-col 5-10 Days
+            tr
+              td Park & Rec
+              td.time-col 7-14 Days
+      // Emergency Contact
+      .info-card
+        h3 Emergency Contacts
+        p.card-subtitle For urgent public issue
+        .contact-group
+          label Police / Fire / EMS
+          a.emergency-link(href="tel:911") 911
+        .contact-group
+          label Non-Emergency
+          a.contact-link(href="tel:+63285319001") (02) 8531-9001 to 10 local 201
+        .contact-group
+          label City Hotline 24/7
+          a.contact-link(href="tel:+639178998727") 0917-899-8727 (USAP)
+    pre#out
+  //- .footer © Web title · Municipal Complaint redress system · All complaints are public record
+  script(type="module" src="/js/complaints.js")
+  include ../partials/toast
+  include ../partials/footer

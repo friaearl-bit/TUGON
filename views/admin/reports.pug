@@ -1,0 +1,167 @@
+//- extends ../layout
+//- block content
+
+block content
+  include ../layout
+  
+  link(href="/css/reports.css" rel="stylesheet")
+  
+  main.dashboard-container
+    .dashboard-header
+      .header-content
+        div
+          h1 Analytics Dashboard
+          p Track system performance and complaint trends
+          //- p Welcome, #{user.fullname || user.name} (Coordinator)
+
+        .dashboard-tools
+          a.btn-secondary(href="/admin/reports")
+            | Reports
+          
+          a.btn-primary(href="/dashboard/admin/export")
+            | Export
+    
+    br
+    // ============ EXECUTIVE SUMMARY CARDS ============
+    .stats-grid
+
+      .stat-card.pending
+        h3 Pending
+        //- span= complaints.filter(c => c.status === "PENDING").length
+        span= pending
+
+      .stat-card.assigned
+        h3 Assigned
+        //- span= complaints.filter(c => c.status === "ASSIGNED").length
+        span= assigned
+        //- span=  rejected
+
+      .stat-card.progress
+        h3 In Progress
+        //- span= complaints.filter(c => c.status === "IN_PROGRESS").length
+        span= inProgress
+
+      .stat-card.resolved
+        h3 Resolved
+        //- span= complaints.filter(c => c.status === "RESOLVED").length
+        span= resolved
+
+    //- .summary-grid
+    //-   .grid-item.summary-card
+    //-     .summary-content
+    //-       .summary-icon
+    //-         i(data-lucide="file-text")
+    //-       .summary-details
+    //-         h3 Total Complaints
+    //-         .summary-value 0
+    //-   .grid-item.summary-card
+    //-     .summary-content
+    //-       .summary-icon
+    //-         i(data-lucide="clock")
+    //-       .summary-details
+    //-         h3 Pending
+    //-         .summary-value 0
+    //-   .grid-item.summary-card
+    //-     .summary-content
+    //-       .summary-icon
+    //-         i(data-lucide="check-circle")
+    //-       .summary-details
+    //-         h3 Resolved
+    //-         .summary-value 0
+    //-   .grid-item.summary-card
+    //-     .summary-content
+    //-       .summary-icon
+    //-         i(data-lucide="target")
+    //-       .summary-details
+    //-         h3 Resolution Rate
+    //-         .summary-value 0%
+    //-   .grid-item.summary-card
+    //-     .summary-content
+    //-       .summary-icon
+    //-         i(data-lucide="bar-chart-3")
+    //-       .summary-details
+    //-         h3 Avg Resolution Time
+    //-         .summary-value 0h
+    //-   .grid-item.summary-card
+    //-     .summary-content
+    //-       .summary-icon
+    //-         i(data-lucide="users")
+    //-       .summary-details
+    //-         h3 Active Departments
+    //-         .summary-value 0
+
+    // ============ CHARTS ROW 1 ============
+    .dashboard-grid
+      .grid-item.span-2
+        .card
+          .card-header
+            h5 Complaints by Status
+          .card-body
+            .chart-container
+              canvas#statusChart
+      .grid-item.span-2
+        .card
+          .card-header
+            h5 Complaints by Priority
+          .card-body
+            .chart-container
+              canvas#priorityChart
+
+      // ============ CHARTS ROW 2 ============
+      .grid-item.span-2
+        .card
+          .card-header
+            h5 Department Workload
+          .card-body
+            .chart-container
+              canvas#departmentChart
+      .grid-item.span-2
+        .card
+          .card-header
+            h5 Complaints by Category
+          .card-body
+            .chart-container
+              canvas#categoryChart
+
+      // ============ CHARTS ROW 3 ============
+      .grid-item.full-width
+        .card
+          .card-header
+            h5 Monthly Complaint Trend
+          .card-body
+            .chart-container
+              canvas#monthlyChart
+
+    // ============ CHARTS ROW 4 ============
+      .grid-item
+        .card
+          .card-header
+            h5 Staff Performance
+          .card-body
+            .chart-container
+              canvas#staffChart
+      .grid-item
+        .card
+          .card-header
+            h5 Resolution Time Metrics
+          .card-body
+            .metrics-grid
+              .metric
+                .metric-value 0h
+                .metric-label Average
+              .metric
+                .metric-value 0h
+                .metric-label Fastest
+              .metric
+                .metric-value 0h
+                .metric-label Slowest
+              .metric
+                .metric-value 0
+                .metric-label Total Resolved
+
+    // ============ ERROR DISPLAY ============
+    .alert.alert-error#reportsError(style="display: none;")
+
+  script(src="/js/chart.umd.min.js")
+  script(src="/js/reports.js" type="module")
+  include ../partials/footer

@@ -1,0 +1,141 @@
+//- extends ../layout
+
+block content
+  include ../layout
+
+
+
+
+
+  if toast
+    #toast-data(
+      data-type=toast.type
+      data-title=toast.title
+      data-message=toast.message
+    )
+
+  main.dashboard-container
+
+    .dashboard-header
+
+      .header-content
+
+        div
+          h1 Admin Dashboard
+          p Welcome, #{user.fullname || user.name} (Coordinator)
+
+        .dashboard-tools
+
+          a.btn-secondary(href="/admin/reports")
+            | Reports
+          
+          a.btn-primary(href="/dashboard/admin/export")
+            | Export
+    br
+    .stats-grid
+      .stat-card.pending
+        h3 Pending
+        span= complaints.filter(c => c.status === "PENDING").length
+
+      .stat-card.assigned
+        h3 Assigned
+        span= complaints.filter(c => c.status === "ASSIGNED").length
+
+      .stat-card.progress
+        h3 In Progress
+        span= complaints.filter(c => c.status === "IN_PROGRESS").length
+
+      .stat-card.resolved
+        h3 Resolved
+        span= complaints.filter(c => c.status === "RESOLVED").length
+
+    .table-card
+      .table-header
+        .table-title-group
+          h2 Complaint Management
+          p.record-count= complaints.length + ' Records' + (filters.isDeleted ? ' (Deleted)' : '')
+
+        .actions-bar
+          .form-check.form-switch
+            input.toggle-btn.form-check-input#toggleDeleted(
+              type="checkbox"
+              checked=filters.isDeleted
+              data-toggle="deleted-filter"
+            )
+            label.form-check-label(for="toggleDeleted") Show Deleted
+          a.btn-primary(href="/complaints/new") File New Complaint
+
+      form(method="GET" action="/dashboard")
+        .table-tools
+          .tools-search
+            i.lucide-relative(data-lucide="search" style="left: 2.4rem; z-index: 1;")
+            input.search-input(
+              type="search"
+              name="search"
+              value=filters.query.search || ""
+              placeholder="Search complaint..."
+            )
+
+          select(name="status")
+            option(value="") All Statuses
+            each s in filters.statuses
+              option(value=s selected=filters.query.status === s)= s
+
+          select(name="priority")
+            option(value="") All Priorities
+            each p in filters.priorities
+              option(value=p selected=filters.query.priority === p)= p
+
+          if user.role === "ADMIN" || user.role === "SUPERADMIN"
+            select(name="department")
+              option(value="") All Departments
+              each dept in departments
+                option(value=dept.id selected=filters.query.department == dept.id)= dept.name
+
+          select(name="category")
+            option(value="") All Categories
+            each c in filters.categories
+              option(value=c selected=filters.query.category === c)= c
+
+          button.btn-primary(type="submit") Filter
+          a.btn-secondary(href="/dashboard") Reset
+
+        br
+        .table-responsive
+          table.data-table
+            thead
+              tr
+                th Id
+                th Ref #
+                th Complaint
+                th Priority
+                th Status
+                th Complainant
+                th Department
+                th Assigned To
+                th Actions
+
+            tbody
+              each complaint in complaints
+                tr
+                  td= complaint.id
+                  td= complaint.referenceNo
+                  td.table-title= complaint.title
+                  td
+                    span(class=`priority-badge ${complaint.priority.toLowerCase()}`)= complaint.priority
+                  td
+                    span(class=`status-badge ${complaint.status.toLowerCase()}`)= complaint.status
+                  td= complaint.complainant ? (complaint.complainant.fullname || complaint.complainant.name) : "N/A"
+                  td= complaint.assignedDepartment ? complaint.assignedDepartment.name : "Unassigned"
+                  td= complaint.assignedTo ? (complaint.assignedTo.fullname || complaint.assignedTo.name) : "Unassigned"
+                  td.actions
+                    a.action-btn.view(href=`/complaints/${complaint.id}`) Edit
+                    if filters.isDeleted
+                      a.action-btn.restore(href=`/complaints/restore/${complaint.id}` data-name=`${complaint.referenceNo}`) Restore
+                    else
+                      a.action-btn.delete(href=`/complaints/delete/${complaint.id}` data-name=`${complaint.referenceNo}`) Delete
+
+  
+  script(src="/js/dashboard.js" type="module")
+  include ../partials/toast
+  include ../partials/footer

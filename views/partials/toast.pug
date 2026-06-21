@@ -1,0 +1,7 @@
+#toast-container
+
+script#toast-data(type="application/json").
+  !{JSON.stringify(toasts || [])}
+
+//- Unescaped
+//-   != JSON.stringify(toasts || [])

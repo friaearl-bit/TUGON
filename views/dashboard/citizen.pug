@@ -1,0 +1,127 @@
+//- extends ../layout
+
+block content
+	include ../layout
+
+	main.dashboard-container
+		.dashboard-header
+			.header-content
+
+				div
+					h1 Citizen Dashboard
+					p Welcome, #{user.fullname || user.name} (#{user.email})
+
+		br
+		.table-card
+			.table-header
+				.table-title-group
+					h2 My Complaints
+					p.record-count= complaints.length + " Records"
+				.actions
+					a.btn-primary(href="/complaints/new") File New Complaint
+
+
+				//- .table-tools
+				//- 	input.search-input(type="search" placeholder="Search complaint...")
+			form(method="GET" action="/dashboard")
+				.table-tools
+					.tools-search
+						i.lucide-relative(data-lucide="search" style="left: 2.4rem; z-index: 1;")
+						input.search-input(
+						type="search"
+						name="search"
+						value=filters.query.search || ""
+						placeholder="Search complaint..."
+						)
+
+					select(name="status")
+						option(value="") All Statuses
+						each s in filters.statuses
+							option(value=s selected=filters.query.status === s)= s
+
+					select(name="priority")
+						option(value="") All Priorities
+						each p in filters.priorities
+							option(value=p selected=filters.query.priority === p)= p
+
+					if user.role === "ADMIN" || user.role === "SUPERADMIN"
+						select(name="department")
+						option(value="") All Departments
+						each dept in departments
+							option(value=dept.id selected=filters.query.department == dept.id)= dept.name
+
+					select(name="category")
+						option(value="") All Categories
+						each c in filters.categories
+							option(value=c selected=filters.query.category === c)= c
+
+					button.btn-primary(type="submit") Filter
+					a.btn-secondary(href="/dashboard") Reset
+
+			br
+			.table-responsive
+				table.data-table
+					thead
+					tr
+						th ID
+						th Reference #
+						th Title
+						th Subject
+						th Category
+						th Priority
+						th Status
+						th Description
+						th Location
+						th Attachment
+						th Assigned To
+						th Department
+						th Assigned At
+						th Resolved At
+						th Resolution Notes
+						th Created
+						th Updated
+						th Actions
+					tbody
+					each complaint in complaints
+						tr
+						td= complaint.id
+						td= complaint.referenceNo
+						td= complaint.title
+						td= complaint.subject
+						td= complaint.category
+						td
+							span(
+								class=`priority-badge ${complaint.priority.toLowerCase()}`
+							)
+								= complaint.priority
+
+						td
+
+							span(
+								class=`status-badge ${complaint.status.toLowerCase()}`
+							)
+								= complaint.status
+						td= complaint.description
+						td
+							= complaint.barangay + (complaint.subdivisionVillage ? ", " + complaint.subdivisionVillage : "") + (complaint.streetName ? ", " + complaint.streetName : "") + (complaint.buildingFloor ? ", " + complaint.buildingFloor : "")
+						td
+							if complaint.attachmentUrl
+								a(href=complaint.attachmentUrl target="_blank") View Attachment
+						- const assignedName = (complaint.assignedTo && (complaint.assignedTo.fullname || complaint.assignedTo.name)) || 'Unassigned'
+						- const deptName = (complaint.assignedDepartment && complaint.assignedDepartment.name) || 'Unassigned'
+						- const assignedAt = complaint.assignedAt ? new Date(complaint.assignedAt).toLocaleString() : 'N/A'
+						- const resolvedAt = complaint.resolvedAt ? new Date(complaint.resolvedAt).toLocaleString() : 'N/A'
+
+						td= assignedName
+						td= deptName
+						td= assignedAt
+						td= resolvedAt
+
+						td= complaint.resolutionNotes || 'None'
+						td= new Date(complaint.createdAt).toLocaleString()
+						td= new Date(complaint.updatedAt).toLocaleString()
+						td
+							a.action-btn.view(href="/complaints/" + complaint.id) View
+
+	include ../partials/toast
+	include ../partials/footer

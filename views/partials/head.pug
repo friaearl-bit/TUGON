@@ -1,0 +1,37 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(
+      content="width=device-width, initial-scale=1.0" 
+      name="viewport"
+      )
+    title TUGON - Municipal Complaint Redress System
+    link(
+      type="image/x-icon" 
+      href="/images/favicon.ico" 
+      rel="icon"
+      )
+    link(
+      type="image/x-icon" 
+      href="/images/favicon.ico" 
+      rel="shortcut icon"
+      )
+    link(
+      href="/css/styles.css" 
+      rel="stylesheet"
+      )
+    link(
+      href="/css/toast.css" 
+      rel="stylesheet"
+      )
+    script(src="/js/lucide.min.js" defer)
+  body
+    if toast
+      #toast-data(
+        data-type=toast.type
+        data-title=toast.title
+        data-message=toast.message
+        hidden
+      )
+    block content

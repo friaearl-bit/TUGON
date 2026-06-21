@@ -1,0 +1,126 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(
+      content="width=device-width, initial-scale=1.0" 
+      name="viewport"
+      )
+    //- meta(name="csrf-token" content=csrfToken)
+    title TUGON - Municipal Complaint Redress System
+    link(
+      type="image/x-icon" 
+      href="/images/favicon.ico" 
+      rel="icon"
+      )
+    link(
+      type="image/x-icon" 
+      href="/images/favicon.ico" 
+      rel="shortcut icon"
+      )
+    link(
+      href="/css/styles.css" 
+      rel="stylesheet"
+      )
+    link(
+      href="/css/toast.css" 
+      rel="stylesheet"
+      )
+    script(src="/js/lucide.min.js" defer)
+    script(src="/js/sidebars.js" defer)
+  body
+
+    include ./partials/modal
+
+    if toast
+      #toast-data(
+        data-type=toast.type
+        data-title=toast.title
+        data-message=toast.message
+      )
+        //- hidden
+    
+    if userRole === 'SUPERADMIN' || userRole === 'ADMIN' || userRole === 'STAFF'
+      include ./partials/sidebar-left-admin
+    else
+      include ./partials/sidebar-left
+    
+    // RIGHT SIDEBAR (Notifications)
+    aside#sidebarRight.sidebar-right
+      .notif-header
+        h3 Notifications
+        #closeRightSidebar.notif-close
+          i(data-lucide="x")
+
+      .notif-list#notifList
+        // JS will inject notifications here
+            
+    // STICKY HEADER
+    nav#header.header
+      a(href="/")
+        .header-brand
+          img(
+            src="/images/logo.png" 
+            alt="TUGON Logo"
+            )
+          .brand-text
+            h1 TUGON
+            p Municipal Complaint Redress System
+      .header-actions
+        #openNotifSidebar.header-notif
+          i(data-lucide="bell")
+          span#notifBadge.badge 0
+        
+        
+        if user
+          // LOGGED IN STATE (Profile Dropdown)
+          #profileDropdown.profile-dropdown
+            button.profile-btn(type="button")
+              //- .profile-avatar JD
+              .profile-avatar= (user && user.name) ? user.name.slice(0,2) : ''
+              .profile-info
+                //- span.profile-name John Doe
+                //- span.profile-role Administrator
+                span.profile-name= user.name
+                span.profile-role= user.role
+              i.dropdown-arrow(data-lucide="chevron-down")
+            .dropdown-menu
+              .dropdown-header
+                .avatar= (user && user.name) ? user.name.slice(0,2) : ''
+                //- .name John Doe
+                .name= user.name
+                //- .email john.doe@tugon.gov.ph
+                .email= user.email
+              .dropdown-items
+                //- a.action-btn.delete(href=`/complaints/${complaint.id}/delete` data-name=`${complaint.referenceNo}`) Delete
+
+                //- a.dropdown-item.action-btn.edit-profile(href="#" data-user=`${JSON.stringify(user)}`)
+                a.dropdown-item.action-btn.edit-profile(href=`/user/edit/${user.id}` data-user=`${JSON.stringify(user)}`)
+                  i(data-lucide="user")
+                  | My Profile
+                a.dropdown-item(href="/settings")
+                  i(data-lucide="settings")
+                  | Settings
+                a.dropdown-item(href="/notifications")
+                  i(data-lucide="bell")
+                  | Notifications
+                .dropdown-divider
+                a.dropdown-item(href="/help")
+                  i(data-lucide="help-circle")
+                  | Help Center
+              .dropdown-footer
+                a.dropdown-item(href="/auth/logout")
+                  i(data-lucide="log-out")
+                  | Log Out
+        else
+          // LOGGED OUT STATE
+          a.header-login(href="/auth/login")
+            i(data-lucide="log-in")
+            span.login-text
+              | LOG IN
+        #openMenuSidebar.header-menu
+          span
+          span
+          span
+        //- script(src="/js/lucide.js")
+      //- block content

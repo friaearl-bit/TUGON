@@ -1,0 +1,59 @@
+// STICKY HEADER
+nav#header.header
+  a(href="/")
+    .header-brand
+      img(
+        src="/images/logo.png" 
+        alt="TUGON Logo"
+        )
+      .brand-text
+        h1 TUGON
+        p Municipal Complaint Redress System
+  .header-actions
+    #openNotifSidebar.header-notif
+      i(data-lucide="bell")
+      span.badge 2
+    
+    if user
+      // LOGGED OUT STATE
+      a.header-login(href="/auth/login")
+        i(data-lucide="log-in")
+        | LOG IN
+    else
+      // LOGGED IN STATE (Profile Dropdown)
+      #profileDropdown.profile-dropdown
+        button.profile-btn(type="button")
+          .profile-avatar JD
+          .profile-info
+            span.profile-name John Doe
+            span.profile-role Administrator
+          i.dropdown-arrow(data-lucide="chevron-down")
+        .dropdown-menu
+          .dropdown-header
+            .avatar JD
+            .name John Doe
+            //- .idk= user.name
+            .email john.doe@tugon.gov.ph
+            //- .email= user.email
+          .dropdown-items
+            a.dropdown-item(href="/profile")
+              i(data-lucide="user")
+              | My Profile
+            a.dropdown-item(href="/settings")
+              i(data-lucide="settings")
+              | Settings
+            a.dropdown-item(href="/notifications")
+              i(data-lucide="bell")
+              | Notifications
+            .dropdown-divider
+            a.dropdown-item(href="/help")
+              i(data-lucide="help-circle")
+              | Help Center
+          .dropdown-footer
+            a.dropdown-item(href="/auth/logout")
+              i(data-lucide="log-out")
+              | Log Out
+    #openMenuSidebar.header-menu
+      span
+      span
+      span

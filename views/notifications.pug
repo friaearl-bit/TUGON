@@ -1,0 +1,49 @@
+extends layout
+
+block content
+  .page-container
+    .page-header
+      h1 Notifications
+
+      .actions
+        button.btn-secondary#markAllRead Mark all as read
+
+    if notifications.length === 0
+      .empty-state
+        p No notifications yet.
+    else
+      table.notification-table
+        thead
+          tr
+            th Type
+            th Title
+            th Message
+            th Status
+            th Date
+            th Actions
+
+        tbody
+          each n in notifications
+            tr(class=n.read ? "read" : "unread")
+              td
+                span.badge(class=n.type.toLowerCase())= n.type
+
+              td
+                strong= n.title
+
+              td
+                span= n.message
+
+              td
+                if n.read
+                  span.status.read Read
+                else
+                  span.status.unread Unread
+
+              td
+                small= new Date(n.createdAt).toLocaleString()
+
+              td.actions
+                if !n.read
+                  form(method="POST", action=`/notifications/${n.id}/read`)
+                    button.btn-link(type="submit") Mark read

@@ -1,0 +1,80 @@
+// OVERLAY
+#overlay.overlay
+// LEFT SIDEBAR (Burger Menu)
+aside#sidebarLeft.sidebar-left
+  .sidebar-header
+    a(href="/")
+      .sidebar-brand
+        img(
+          alt="TUGON Logo" 
+          src="/images/logo.png"
+          )
+        .sidebar-brand-text
+          h3 TUGON
+          p Municipal Complaint System
+    #closeLeftSidebar.sidebar-close
+      i(data-lucide="x")
+  nav.sidebar-nav
+    ul
+      li
+        a(class=(activePath === '/dashboard' ? 'active' : '') href='/dashboard')
+          i(data-lucide="house")
+          | Dashboard
+        
+      li.nav-item
+        a(class=(activePath === '/admin/reports' ? 'active' : '') href='/admin/reports')
+          i(data-lucide="chart-area")
+          | Reports
+      
+      //- li.nav-item
+      //-   a(class=(activePath === '/tables' ? 'active' : '') href='/tables')
+      //-     i(data-lucide="table")
+      //-     | Tables
+      
+      li.nav-item
+        a(class=(activePath === '/user/list' ? 'active' : '') href='/user/list')
+          i(data-lucide="users")
+          | Users
+      
+      li
+        a(class=(activePath === '/complaints/new' ? 'active' : '') href='/complaints/new')
+          i(data-lucide="file-text")
+          | File Complaint
+      
+      li
+        a(class=(activePath === '/complaints/my' ? 'active' : '') href='/complaints/my')
+          i(data-lucide="clock")
+          | My Complaints
+      
+      //- li.nav-item
+      //-   a.nav-link(href="/admin/deleted")
+      //-     i(data-lucide="trash-2")
+      //-     | Deleted
+
+
+      //- if user && (user.role === "ADMIN" || user.role === "SUPERADMIN")
+      //- li
+      //-   a(href="/dashboard")
+      //-   a(class=(activePath === '/tables' ? 'active' : '') href='/tables')
+
+      //-     i(data-lucide="files")
+      //-     | All Complaints basically dashboard
+      //- else
+      //-   li
+      //-     a(href="#")
+      //-       i(data-lucide="search")
+      //-       | Track Complaint idk
+      //- li
+      //-   a(href="#")
+      //-     i(data-lucide="info")
+      //-     | About
+      //- li
+      //-   a(href="#")
+      //-     i(data-lucide="circle-question-mark")
+      //-     | Help
+      li
+        a(class=(activePath === '/settings' ? 'active' : '') href='/settings')
+          i(data-lucide="settings")
+          | Settings
+  .sidebar-footer
+    p © 2026 TUGON - All complaints are public record

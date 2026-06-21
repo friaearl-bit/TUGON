@@ -1,0 +1,29 @@
+
+include ./partials/head
+
+main.error-page
+  .error-card
+    .error-code
+      = statusCode || 404
+
+    h1.error-title
+      = errorTitle || "Something went wrong"
+
+    p.error-message
+      = message || "The requested page could not be found."
+
+    .error-actions
+
+      a.btn-primary(href="/")
+        | Go to Homepage
+
+      a#goBack.btn-secondary(href=backUrl)
+        | Go Back
+
+    if stack && user && user.role === "ADMIN"
+      .error-stack
+        pre= stack
+
+    .error-meta
+      small
+        | Reference: MCRS-ERR-#{statusCode || 500}

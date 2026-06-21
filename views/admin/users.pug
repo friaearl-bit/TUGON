@@ -1,0 +1,192 @@
+//- Users Grid View
+
+block content
+  include ../layout
+
+  link(
+    href="/css/users.css" 
+    rel="stylesheet"
+  )
+
+        
+  // MAIN CONTENT
+  .page-wrapper
+    main.main-content
+      .content-wrapper
+
+        .users-header
+          h1 User Management
+          p Manage system users and permissions
+          .users-controls
+            .users-search
+              i.lucide-relative(data-lucide="search" style="left: 2.4rem")
+              input(type="search" placeholder="Search users..." name="search" value="")
+            .users-filter
+              select(name="role")
+                option(value="") All Roles
+                option(value="SUPERADMIN") Superadmin
+                option(value="ADMIN") Admin
+                option(value="CITIZEN") Citizen
+            .users-filter
+              select(name="department")
+                option(value="") All Departments
+                option(value="1") Engineering Office
+                option(value="2") Environment Office
+                option(value="3") Public Utilities Office
+            if user.role === 'SUPERADMIN'
+              a.btn.btn-primary(href="/users/new")
+                i(data-lucide="plus")
+                | Add User
+
+        .users-grid
+          each user in users
+            .user-card
+              .user-card-header
+                //-   .user-avatar= user.firstName? user.firstName.charAt(0) + (user.lastName? user.lastName.charAt(0) : '') : user.name.charAt(0)
+                //- .user-avatar= (user.firstName ? user.firstName.charAt(0) : '') + (user.lastName ? user.lastName.charAt(0) : '')
+                .user-avatar= (user && user.name) ? user.name.slice(0,2) : ''
+                .user-info
+                  .user-name= user.fullname || user.name || (user.firstName + ' ' + user.lastName)
+                  .user-email= user.email
+
+                if user.role === 'SUPERADMIN' || currentUser.role === 'SUPERADMIN'
+                  //- button.user-action-btn(type="button" onclick="openProfileModal(#{user.id})")
+                  button.user-action-btn.js-open-profile(
+                    type="button"
+                    data-user-id=user.id
+                    data-view-only=(user.role === 'SUPERADMIN' || currentUser.role !== 'SUPERADMIN')
+                  )
+                    i(data-lucide="edit-2")
+                    | Edit
+                  //- button.user-action-btn(type="button")
+                  //-   i(data-lucide="edit-2")
+                  //-   | Edit
+                else
+                  //- button.user-action-btn(type="button" onclick="openProfileModal(#{user.id}, true)")
+                  button.user-action-btn.js-open-profile( type="button" data-user-id=user.id data-view-only=(user.role === 'SUPERADMIN' || currentUser.role !== 'SUPERADMIN'))
+                    i(data-lucide="eye")
+                    | View
+                  //- button.user-action-btn(type="button")
+                  //-   i(data-lucide="eye")
+                  //-   | View
+
+
+              .user-card-body
+                .user-detail
+                  .user-detail-label ID
+                  .user-detail-value= user.id
+                .user-detail
+                  .user-detail-label Role
+                  .user-detail-value
+                    .user-role= user.role
+                .user-detail
+                  .user-detail-label Department
+                  .user-detail-value= user.department ? user.department.name : 'None'
+                .user-detail
+                  .user-detail-label Status
+                  .user-detail-value
+                    .user-status(class=user.isActive ? 'active' : 'inactive')= user.isActive ? 'Active' : 'Inactive'
+              //- .user-card-footer
+              //-   if user.role === 'SUPERADMIN' || currentUser.role === 'SUPERADMIN'
+              //-     //- button.user-action-btn(type="button" onclick="openProfileModal(#{user.id})")
+              //-     button.user-action-btn(type="button")
+              //-       i(data-lucide="edit-2")
+              //-       | Edit
+              //-   else
+              //-     //- button.user-action-btn(type="button" onclick="openProfileModal(#{user.id}, true)")
+              //-     button.user-action-btn(type="button")
+              //-       i(data-lucide="eye")
+              //-       | View
+
+        //- User Profile Modal
+        //- .user-profile-modal(id="userProfileModal" aria-hidden="true")
+        //- #userProfileModal
+        
+        //- User Profile Modal - Clean Structure
+
+        #userProfileModal.user-profile-modal(aria-hidden="true")
+          .user-profile-card
+            .user-profile-header
+              h2 User Profile
+              button.user-profile-close(type="button" aria-label="Close")
+                i(data-lucide="x")
+            .user-profile-body
+              .profile-section
+                .modal-profile-avatar(id="profileAvatar")= (user && user.name) ? user.name.slice(0,2) : ''
+
+                .profile-info
+                //- span.profile-name John Doe
+                //- span.profile-role Administrator
+                //- span.profile-name= user.name
+                //- span.profile-role= user.role
+                .profile-field
+                  //- .profile-field-label Full Name
+                  .profile-field-value(id="profileFullName")= user.fullname || user.name
+                .profile-field
+                  //- .profile-field-label Full Name
+                  .profile-field-value(id="profileEmail")
+                  //- = user.fullname || user.name
+              .profile-section
+                .profile-section-title Personal Information
+                .profile-field
+                  .profile-field-label Username
+                  .profile-field-value(id="profileUsername")= user.username || "N/A"
+                .profile-field
+                  .profile-field-label First Name
+                  .profile-field-input(id="profileFirstName" type="text" disabled)= user.firstName || "N/A"
+                .profile-field
+                  .profile-field-label Middle Name
+                  .profile-field-input(id="profileMiddleName" type="text" disabled)= user.middleName || "N/A"
+                .profile-field
+                  .profile-field-label Last Name
+                  .profile-field-input(id="profileLastName" type="text" disabled)= user.lastName || "N/A"
+                .profile-field
+                  .profile-field-label Contact Number
+                  .profile-field-input(id="profileContactNumber" type="tel" disabled)= user.contactNumber || "N/A"
+                .profile-field
+                  .profile-field-label Address
+                  .profile-field-input(id="profileAddress" type="text" disabled)= user.address || "N/A"
+              .profile-section
+                .profile-section-title Account Settings
+                .profile-field
+                  .profile-field-label Role
+                  if currentUser.role === 'SUPERADMIN'
+                    select.profile-select(id="profileRole")
+                      option(value="CITIZEN") Citizen
+                      option(value="ADMIN") Admin
+                      option(value="SUPERADMIN") Superadmin
+                  else
+                    .profile-field-value(id="profileRoleDisplay")
+                .profile-field
+                  .profile-field-label Department
+                  if currentUser.role === 'SUPERADMIN'
+                    select.profile-select(id="profileDepartment")
+                      option(value="") None
+                      each dept in departments
+                        option(value=dept.id)= dept.name
+                  else
+                    .profile-field-value(id="profileDepartmentDisplay")
+                .profile-field
+                  .profile-field-label Status
+                  if currentUser.role === 'SUPERADMIN'
+                    .profile-toggle
+                      input(type="checkbox" id="profileStatusToggle")
+                      label(for="profileStatusToggle")
+                        span.toggle-text Active
+                  else
+                    .user-status(id="profileStatusDisplay" class=user.isActive ? "active" : "inactive")= user.isActive ? "Active" : "Inactive"
+              if currentUser.role === 'SUPERADMIN'
+        .profile-actions
+          button.btn.btn-secondary(type="button" data-action="close") Cancel
+          button.btn.btn-primary(type="button" data-action="save")
+            i(data-lucide="check")
+            | Save Changes
+
+  //- script(src="/js/chart.umd.min.js")
+  //- script(src="/js/chart.umd.min.js")
+  
+  script(src="/js/toast.js")
+  include ../partials/footer
+  //- script(src="/js/users.js")
+
+  script(src="/js/users.js" type="module")

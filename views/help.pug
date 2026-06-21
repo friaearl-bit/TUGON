@@ -1,0 +1,195 @@
+//- extends ../layout
+
+block content
+  include ./layout
+  //- include ./partials/modal
+
+  //- button#openModal Open Modal
+      
+  // MAIN CONTENT
+  .page-wrapper
+    main.main-content
+      .content-wrapper
+        // Hero Section using TUGON styles format
+        section.hero.help-hero
+          h2
+            | Help &
+            span.highlight  Support 
+            | Center
+          p.description
+            | Browse step guides, check processing targets, and search active platform FAQs to help resolve local concerns.
+          // Integrated search bar using CSS classes
+          .search-wrapper(style="max-width: 600px; margin: 0 auto;")
+            i(data-lucide="search")
+            input#helpSearch.search-input(
+              style="padding-left: 2.75rem; width: 100%;" 
+              placeholder="Search questions, processing targets, or registration steps..." 
+              type="search"
+              )
+        // Reusing the structural grid-container class
+        .grid-container
+          // Left Section Content
+          .main-form-panel
+            // Getting Started Step Cards
+            #gettingStartedSection
+              h3(
+                style="color: var(--primary-dark); font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;"
+                )
+                i(
+                  style="color: var(--primary);"
+                  data-lucide="compass"
+                  )
+                | Getting Started with TUGON
+              p(style="color: var(--text-soft); font-size: 0.9rem; margin-bottom: 1.5rem;") Follow these three steps to log and track your concerns on our platform.
+              .steps-container
+                .step-item
+                  .step-number 1
+                  h4 Create Account
+                  p Register quickly with your full name and email address to gain access to the dashboard.
+                  a.step-link(href="register.html")
+                    | Register Account
+                    i(
+                      style="width: 14px; height: 14px;" 
+                      data-lucide="arrow-right"
+                      )
+                .step-item
+                  .step-number 2
+                  h4 File a Complaint
+                  p State your issue category, submit description fields, and pin the exact location.
+                  a.step-link(href="complaintForm.html")
+                    | File Complaint
+                    i(
+                      style="width: 14px; height: 14px;" 
+                      data-lucide="arrow-right"
+                      )
+                .step-item
+                  .step-number 3
+                  h4 Track Progress
+                  p Monitor progress, department routing, and official updates on your dashboard.
+                  a.step-link(href="login.html")
+                    | Go to Dashboard
+                    i(
+                      style="width: 14px; height: 14px;" 
+                      data-lucide="arrow-right"
+                      )
+              div(style="height: 1px; background: var(--border); margin: 2.5rem 0 2rem 0;")
+            // FAQs Section
+            h3(
+              style="color: var(--primary-dark); font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;"
+              )
+              i(
+                style="color: var(--primary);" 
+                data-lucide="help-circle"
+                )
+              | Frequently Asked Questions
+            p(style="color: var(--text-soft); font-size: 0.9rem; margin-bottom: 1.5rem;") Select an inquiry category below to expand details.
+            #faqAccordion.faq-list
+              .faq-item
+                button.faq-trigger
+                  span Do I need to verify my citizenship with a government ID to register?
+                  i(data-lucide="chevron-down")
+                .faq-content
+                  .faq-content-inner
+                    | No, registration is designed for quick submission access. Creating a profile requires only your full name and email address. You do not need to upload passport files or physical IDs.
+              .faq-item
+                button.faq-trigger
+                  span What are the target processing times for filed complaints?
+                  i(data-lucide="chevron-down")
+                .faq-content
+                  .faq-content-inner
+                    | Resolutions follow the municipal standard SLA thresholds per category group:
+                    ul
+                      li
+                        | Water and Sewer:
+                        strong 24 Hours
+                      li
+                        | Sanitation:
+                        strong 1-2 Days
+                      li
+                        | Street Lighting:
+                        strong 3-5 Days
+                      li
+                        | Road or Paving:
+                        strong 5-10 Days
+                      li
+                        | Park & Rec:
+                        strong 7-14 Days
+              .faq-item
+                button.faq-trigger
+                  span Are complaints visible to the public?
+                  i(data-lucide="chevron-down")
+                .faq-content
+                  .faq-content-inner
+                    | Yes, all filed civic issues are recorded in the public database to ensure transparent routing and public accountability. Personal credentials such as passwords and contact details remain protected and are kept strictly confidential.
+              .faq-item
+                button.faq-trigger
+                  span How can I monitor routing updates or status changes?
+                  i(data-lucide="chevron-down")
+                .faq-content
+                  .faq-content-inner
+                    | Once logged into your
+                    a(
+                      style="color: var(--primary); font-weight: 600; text-decoration: underline;" 
+                      href="login.html"
+                      ) Citizen Dashboard
+                    | , you can review live tracking histories, see assigned personnel, and view active status tags (Pending, Assigned, In Progress, or Resolved).
+            // Fallback Search notice
+            #noMatchesNotice.no-matches
+              i(data-lucide="search-x")
+              h4 No Results Found
+              p(style="font-size: 0.85rem; margin-top: 4px;") Try searching for shorter keywords, or consult support contacts in the side panel.
+          // Right Sidebar Column
+          .sidebar-panel
+            // Contact Card
+            .info-card
+              h3(style="display: flex; align-items: center; gap: 8px;")
+                i(
+                  style="color: var(--primary); width: 18px; height: 18px;" 
+                  data-lucide="phone"
+                  )
+                | Contact Support
+              p.card-subtitle(style="font-size: 0.85rem; line-height: 1.4;")
+                | Get in touch directly with administrative offices if your concerns require urgent processing.
+              .contact-group
+                label Helpdesk Support Email
+                a.contact-link(href="mailto:support@mcrs.com") support@mcrs.com
+              .contact-group(style="margin-top: 1rem;")
+                label General Hotlines
+                p(style="font-weight: 600; color: var(--text);") (02) 8531-9001 to 10 local 201
+              .contact-group(style="margin-top: 1rem;")
+                label City Hotline 24/7
+                p(style="font-weight: 600; color: var(--text);") 0917-899-8727 (USAP)
+              .contact-group(style="margin-top: 1rem;")
+                label Operating Hours
+                p(style="font-size: 0.85rem; color: var(--text-soft);") Monday to Friday, 8:00 AM – 5:00 PM
+              div(style="border-top: 1px solid var(--border); margin: 1.25rem 0; padding-top: 1rem;")
+                label(style="color: var(--danger); font-weight: 700;") Emergency Contexts
+                a.emergency-link(href="tel:911") Dial 911
+                p(style="font-size: 0.75rem; color: var(--text-soft); margin-top: 4px;")
+                  | For immediate public safety risks, fire hazards, or medical concerns, bypass TUGON and contact emergency responders directly.
+            // Terms of Service Summary Card
+            .info-card
+              h3(style="display: flex; align-items: center; gap: 8px;")
+                i(
+                  style="color: var(--primary); width: 18px; height: 18px;" 
+                  data-lucide="file-text"
+                  )
+                | Terms of Service
+              p.card-subtitle(style="font-size: 0.85rem; line-height: 1.4; margin-bottom: 1rem;") Summary policies and reporting conditions on our platform.
+              .tos-container
+                h5 1. Accurate Filings
+                p
+                  | Users must submit accurate civic details. Logging deliberate spam or fake accounts is prohibited.
+                h5 2. Open Public Records
+                p
+                  | To encourage public integrity, complaint categories and descriptions are visible within open municipal tracking pages.
+                h5 3. Resolution Estimations
+                p
+                  | SLA targets are operating estimates depending on environmental circumstances and current departmental queues.
+              p(
+                style="font-size: 0.75rem; color: var(--text-soft); text-align: center; margin-top: 12px; margin-bottom: 0;"
+                ) Last Revision: November 2024
+        
+  script(src="/js/help.js")
+  include ./partials/toast
+  include ./partials/footer

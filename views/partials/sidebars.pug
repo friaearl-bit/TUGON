@@ -1,0 +1,83 @@
+// OVERLAY
+#overlay.overlay
+// LEFT SIDEBAR (Burger Menu)
+aside#sidebarLeft.sidebar-left
+  .sidebar-header
+    a(href="/")
+      .sidebar-brand
+        img(
+          alt="TUGON Logo" 
+          src="/images/logo.png"
+          )
+        .sidebar-brand-text
+          h3 TUGON
+          p Municipal Complaint System
+    #closeLeftSidebar.sidebar-close
+      i(data-lucide="x")
+  nav.sidebar-nav
+    ul
+      li
+        a.active(href="#")
+          i(data-lucide="house")
+          | Home
+      li
+        a(href="#")
+          i(data-lucide="file-text")
+          | File Complaint
+      li
+        a(href="#")
+          i(data-lucide="search")
+          | Track Complaint
+      li
+        a(href="#")
+          i(data-lucide="clock")
+          | My Complaints
+      li
+        a(href="#")
+          i(data-lucide="info")
+          | About
+      li
+        a(href="#")
+          i(data-lucide="circle-question-mark")
+          | Help
+      li
+        a(href="#")
+          i(data-lucide="settings")
+          | Settings
+  .sidebar-footer
+    p © 2026 TUGON - All complaints are public record
+// RIGHT SIDEBAR (Notifications)
+aside#sidebarRight.sidebar-right
+  .notif-header
+    h3 Notifications
+    #closeRightSidebar.notif-close
+      i(data-lucide="x")
+  .notif-list
+    .notif-item.unread
+      .notif-icon
+        i(data-lucide="circle-check-big")
+      .notif-content
+        h4 Complaint Resolved
+        p Your complaint about the pothole on Main Street has been resolved.
+        span.notif-time 2 hours ago
+    .notif-item.unread
+      .notif-icon
+        i(data-lucide="info")
+      .notif-content
+        h4 New Update
+        p There's an update on your water supply complaint.
+        span.notif-time 5 hours ago
+    .notif-item
+      .notif-icon
+        i(data-lucide="user-plus")
+      .notif-content
+        h4 Account Verified
+        p Your account has been successfully verified.
+        span.notif-time 1 day ago
+    .notif-item
+      .notif-icon
+        i(data-lucide="bell")
+      .notif-content
+        h4 Welcome to TUGON
+        p Thank you for registering with our complaint redress system.
+        span.notif-time 3 days ago

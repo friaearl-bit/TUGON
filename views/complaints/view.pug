@@ -1,0 +1,253 @@
+//- extends ../layout
+
+block content
+  include ../layout
+
+  .main-container.complaint-page
+    .complaint-header
+      .header-left
+
+        h1 Complaint ##{complaint.referenceNo}#{isDeleted ? ' (Deleted)' : ''}
+        p Submitted complaint information
+
+      .header-right
+
+        span(
+          class=`status-badge ${complaint.status.toLowerCase()}`
+        )
+          = complaint.status
+
+        span(
+          class=`priority-badge ${complaint.priority.toLowerCase()}`
+        )
+          = complaint.priority
+
+    form(
+      method="POST"
+      action=`/complaints/${complaint.id}/update`
+    )
+
+      if isStaff
+        input(
+          type="hidden"
+          name="_method"
+          value="PUT"
+        )
+
+      .two-table-layout
+        .detail-card
+
+          h2 Complaint Details
+
+          table.detail-table
+            tr
+              th Category
+              td= complaint.category
+
+            tr
+              th Subject
+              td= complaint.subject
+
+            tr
+              th Description
+              td= complaint.description
+            
+            tr
+              th Complainant
+              td
+                .inline-profile
+                  if complaint.complainant
+                    p= complaint.complainant.name
+                    small= complaint.complainant.email
+                  else
+                    | Not provided
+
+            //- if complaint.attachments && complaint.attachments.length > 0
+            //-   each attachment in complaint.attachments
+            //-     tr
+            //-       td
+            //-         a(href=attachment.filname target="_blank")= attachment.originalName
+            //-       td= attachment.mimeType
+            //-       td= (attachment.size / 1024).toFixed(2) + " KB"
+                  //- td= new Date(attachment.uploadedAt).toLocaleDateString()
+                  //- td
+                  //-   a.btn.btn-sm.btn-outline-primary(href=attachment.url download)
+                  //-     i(data-lucide="download")
+
+            tr
+              th Attachments
+                td
+                  if complaint.attachments && complaint.attachments.length
+                      ul.attachments
+                        each file in complaint.attachments
+                          li(style="list-style: none;")
+                            a.field-value(href=`/uploads/${file.filename}` target="_blank" style="hover")
+                              = file.originalName
+                  else
+                    p N/A
+                          
+
+        .detail-card
+          h2 Timeline
+
+          table.detail-table
+
+            tr
+              th Created
+              td= new Date(complaint.createdAt).toLocaleString()
+
+            if complaint.assignedAt
+              tr
+                th Assigned
+                td= new Date(complaint.assignedAt).toLocaleString()
+
+            if complaint.resolvedAt
+              tr
+                th Resolved
+                td= new Date(complaint.resolvedAt).toLocaleString()
+
+      .two-table-layout
+        .detail-card
+
+          h2 Location
+
+          table.detail-table
+
+            tr
+              th Barangay
+              td= complaint.barangay
+
+            if complaint.subdivisionVillage
+              tr
+                th Village
+                td= complaint.subdivisionVillage
+
+            tr
+              th Street
+              td= complaint.streetName || "N/A"
+
+            tr
+              th Building/Floor
+              td= complaint.buildingFloor || "N/A"
+
+        .detail-card
+
+          h2 Assignment & Workflow
+
+          if user.role === "STAFF"
+            //- form(method="POST" action=`/complaints/${complaint.id}/assign`)
+
+            .form-group
+
+              label(for="priority") Priority
+              select#priority(name="priority")
+                each prio in priorities
+                  option(value=prio selected=prio === complaint.priority)= prio
+
+            .form-group
+
+              label(for="status") Status
+              select#status(name="status")
+                each status in statuses
+                  option(value=status selected=status === complaint.status)= status
+
+            table.detail-table
+
+              tr
+                th Department
+                td= complaint.assignedDepartment ? complaint.assignedDepartment.name : "Not Assigned"
+
+              tr
+                th Assigned Staff
+                td= complaint.assignedTo ? (complaint.assignedTo.fullname || complaint.assignedTo.name) : "Not Assigned"
+            br
+
+          else if user.role === "ADMIN" || user.role === "SUPERADMIN"
+
+            //- form(method="POST" action=`/complaints/${complaint.id}/assign`)
+
+            .form-group
+              label(for="priority") Priority
+              select#priority(name="priority")
+                each prio in priorities
+                  option(value=prio selected=prio === complaint.priority)= prio
+
+            .form-group
+
+              label(for="status") Status
+              select#status(name="status")
+                each status in statuses
+                  option(value=status selected=status === complaint.status)= status
+
+            .form-group
+              label Department
+
+              select#departmentSelect(name="assignedDepartmentId")
+                option(value="") Select Department
+
+                each dept in departments
+                  option(
+                    value=dept.id
+                    selected=dept.id == complaint.assignedDepartmentId
+                  )= dept.name
+
+            .form-group
+              label Assigned Staff
+              select#staffSelect(
+                name="assignedToId"
+                data-selected=complaint.assignedToId
+              )
+                option(value="") Select Staff
+
+                each dept in departments
+                  if dept.id == complaint.assignedDepartmentId
+                    each staff in (dept.users || [])
+                      option(
+                        value=staff.id
+                        selected=staff.id == complaint.assignedToId
+                      )= staff.fullname || staff.name
+
+          else
+
+            table.detail-table
+
+              tr
+                th Priority
+                td= complaint.priority
+
+              tr
+                th Status
+                td= complaint.status
+
+              tr
+                th Department
+                td= complaint.assignedDepartment ? complaint.assignedDepartment.name : "Not Assigned"
+
+              tr
+                th Assigned Staff
+                td= complaint.assignedTo ? (complaint.assignedTo.fullname || complaint.assignedTo.name) : "Not Assigned"
+            br
+
+        section.detail-card
+          h2 Resolution Notes
+          if user.role === "STAFF" || user.role === "ADMIN" || user.role === "SUPERADMIN"
+            .resolution-box
+              textarea(name="resolutionNotes")= complaint.resolutionNotes || "Investigation ongoing..."
+          else
+            p.resolution-box(rows="5")= complaint.resolutionNotes || "Investigation ongoing..." 
+
+
+        if user.role === "STAFF" || user.role === "ADMIN" || user.role === "SUPERADMIN"
+          .action-row
+            a.btn-secondary(href="/dashboard") Cancel
+            button.save-btn(type="submit") Save Changes
+        else
+          .action-row
+            a.btn-secondary(href="/dashboard") Go Back
+
+
+  include ../partials/toast
+
+  script(src="/js/complaint-assignment.js")
+
+  include ../partials/footer

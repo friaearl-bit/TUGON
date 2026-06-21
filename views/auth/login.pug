@@ -1,0 +1,51 @@
+extends ../partials/head
+
+block content
+  //- include ../layout
+  
+  .auth-container
+    .auth-card
+      .auth-header
+        h1 Welcome Back
+        p Login to your TUGON account
+        br
+        // Error Messages
+        if flashes && flashes.length
+          .alert.alert-danger
+            ul
+              each f in flashes
+                li= f.message
+      form(
+        method="POST" 
+        action="/auth/login"
+        )
+        .form-group
+          label(for="email") Email Address
+          input#email(
+            tabindex="1"
+            required="" 
+            placeholder="Enter your email" 
+            name="email" 
+            type="email"
+            )
+        .form-group
+          label(for="password") Password
+          input#password(
+            tabindex="1"
+            required="" 
+            placeholder="Enter your password" 
+            name="password" 
+            type="password"
+            )
+        button.auth-btn(type="submit") Login
+      .auth-demo
+        h4 Demo Account
+        p Email: admin@mcrs.com
+        p Password: password123
+      .auth-footer
+        p
+          | Don't have an account? 
+          a(href="/auth/register") Register
+
+  include ../partials/toast
+  include ../partials/footer

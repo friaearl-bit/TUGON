@@ -1,0 +1,53 @@
+//- extends ../layout
+
+block content
+  include ../layout
+  
+  main.dashboard-container
+    .dashboard-header
+      .header-content
+        div
+          h1 My Complaints
+          //- p Welcome, #{user.fullname || user.name} (Department: #{user.department ? user.department.name : 'General'})
+          p.record-count
+              = complaints.length + " Records"
+
+    if complaints.length === 0
+      p You have no complaints yet.
+      a(href="/complaints/new") File a New Complaint
+    else
+      br
+      .table-card
+        //- h2 My Complaints
+        //- p.record-count
+        //-       = complaints.length + " Records"
+        .table-responsive
+          table.data-table
+            thead
+              tr
+                th Reference #
+                th Title
+                th Category
+                th Priority
+                th Status
+                th AssignedTo
+                th Department
+                th Date
+                th Actions
+            tbody
+              each complaint in complaints
+                tr
+                  td= complaint.referenceNo
+                  td= complaint.title
+                  td= complaint.category
+                  td
+                    span(class=`priority-badge ${complaint.priority.toLowerCase()}`)= complaint.priority
+                  td
+                    span(class=`status-badge ${complaint.status.toLowerCase()}`)= complaint.status
+                  td= (complaint.assignedTo ? (complaint.assignedTo.fullname || complaint.assignedTo.name) : 'Unassigned')
+                  td= (complaint.assignedDepartment ? complaint.assignedDepartment.name : 'Unassigned')
+                  td= new Date(complaint.createdAt).toLocaleDateString()
+                  td
+                    .actions
+                      a.action-btn.view(href=`/complaints/${complaint.id}`) View
+  include ../partials/footer

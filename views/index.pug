@@ -1,0 +1,82 @@
+//- extends ../layout
+
+block content
+  include ./layout
+  include ./partials/modal
+
+  //- button#openModal Open Modal
+      
+  // MAIN CONTENT
+  .page-wrapper
+    main.main-content
+      .content-wrapper
+        // HERO SECTION
+        section.hero
+          h2 Your Voice Matters.
+          h3
+            | Our
+            span.highlight  Commitment 
+            | to Serve.
+          p.description
+            | TUGON is your direct line to municipal services. Submit complaints about civic issues 
+            |   and track their resolution in real-time. We're building a transparent, efficient system 
+            |   that puts community needs first.
+          // FEATURE CARDS (Replaced Fake Statistics)
+          .features
+            .feature-card
+              .feature-icon
+                i(data-lucide="file-text")
+              h4 Simple Submission
+              p File complaints in minutes with our straightforward online form. No paperwork, no hassle.
+            .feature-card
+              .feature-icon
+                i(data-lucide="target")
+              h4 Smart Routing
+              p Your concern automatically reaches the right department for faster resolution.
+            .feature-card
+              .feature-icon
+                i(data-lucide="eye")
+              h4 Transparent Tracking
+              p Monitor progress from submission to resolution with real-time updates.
+            .feature-card
+              .feature-icon
+                i(data-lucide="clock")
+              h4 Always Available
+              p Access the portal anytime, anywhere. Your concerns don't keep office hours.
+          // FILE COMPLAINT BUTTON
+          .file-btn-container
+            a.file-btn(
+              href="/complaints/new"
+            )
+              i(data-lucide="circle-plus")
+              | File a Complaint
+        // HOW IT WORKS SECTION
+        section.how-it-works
+          h4 How It Works
+          .home-steps
+            .home-step
+              .home-step-num 01
+              .home-step-text
+                strong Share Your Concern
+                p
+                  | Tell us about the issue in your neighborhood. Add photos or documents to help us understand.
+            .home-step
+              .home-step-num 02
+              .home-step-text
+                strong We Take Action
+                p
+                  | Your complaint is logged and sent to the appropriate municipal team for immediate attention.
+            .home-step
+              .home-step-num 03
+              .home-step-text
+                strong Stay Informed
+                p Receive updates as we investigate and work on resolving your issue.
+            .home-step
+              .home-step-num 04
+              .home-step-text
+                strong See Results
+                p
+                  | Get notified when your complaint is resolved. All cases remain publicly accessible for transparency.
+
+  include ./partials/toast
+  include ./partials/footer

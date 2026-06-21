@@ -1,0 +1,53 @@
+extends ../partials/head
+
+block content
+  //- include ../layout
+  
+  .auth-container
+    .auth-card
+      .auth-header
+        h1 Create Account
+        p Register a new TUGON account
+        br
+        // Error Messages
+        if flashes && flashes.length
+          .alert.alert-danger
+            ul
+              each f in flashes
+                li= f.message
+      form(
+        method="POST" 
+        action="/auth/register"
+        )
+        .form-group
+          label(for="name") Full Name
+          input#name(
+            required="" 
+            placeholder="Enter your full name" 
+            name="name" 
+            type="text"
+            )
+        .form-group
+          label(for="email") Email Address
+          input#email(
+            required="" 
+            placeholder="Enter your email" 
+            name="email" 
+            type="email"
+            )
+        .form-group
+          label(for="password") Password
+          input#password(
+            required="" 
+            placeholder="Create a password" 
+            name="password" 
+            type="password"
+            )
+        button.auth-btn(type="submit") Register
+      .auth-footer
+        p
+          | Already have an account? 
+          a(href="/auth/login") Login
+          
+  include ../partials/toast
+  include ../partials/footer
