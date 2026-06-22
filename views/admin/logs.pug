@@ -1,0 +1,176 @@
+//- extends ../layout
+
+block content
+  include ../layout
+
+
+
+
+
+  if toast
+    #toast-data(
+      data-type=toast.type
+      data-title=toast.title
+      data-message=toast.message
+    )
+
+  main.dashboard-container
+    //- .dashboard-header
+    //-   .header-content
+
+    //-     div
+    //-       h1 Admin Dashboard
+    //-       p Welcome, #{user.fullname || user.name} (Coordinator)
+
+    //-     .dashboard-tools
+
+    //-       a.btn-secondary(href="/admin/reports")
+    //-         | Reports
+          
+    //-       a.btn-primary(href="/dashboard/admin/export")
+    //-         | Export
+    br
+    //- .stats-grid
+    //-   .stat-card.pending
+    //-     h3 Pending
+    //-     span= complaints.filter(c => c.status === "PENDING").length
+
+    //-   .stat-card.assigned
+    //-     h3 Assigned
+    //-     span= complaints.filter(c => c.status === "ASSIGNED").length
+
+    //-   .stat-card.progress
+    //-     h3 In Progress
+    //-     span= complaints.filter(c => c.status === "IN_PROGRESS").length
+
+    //-   .stat-card.resolved
+    //-     h3 Resolved
+    //-     span= complaints.filter(c => c.status === "RESOLVED").length
+
+    .table-card
+      .table-header
+        .table-title-group
+          h2 Audit Logs
+          p.record-count= auditLogs.length + ' Logs'
+
+        //- .actions-bar
+        //-   a.btn-primary(href="/complaints/new") File New Complaint
+
+        //- Date range filter form
+        form(method="GET" action="/admin/logs/export" class="export-form")
+          .table-tools
+            .filter-group
+              label(for="startDate") From:
+              input(
+                type="date"
+                name="startDate"
+                id="startDate"
+                class="form-control"
+              )
+
+            .filter-group
+              label(for="endDate") To:
+              input(
+                type="date"
+                name="endDate"
+                id="endDate"
+                class="form-control"
+              )
+
+            button(type="submit" class="btn btn-primary")
+              i.lucide-relative(data-lucide="download")
+              | Export CSV
+            a.btn-secondary(href="/admin/logs") Reset
+          
+      //- form(method="GET" action="/dashboard")
+      //-   .table-tools
+      //-     select(name="entityType")
+      //-       option(value="") All Entity Types
+      //-       option(value="AUTH") AUTH
+      //-       option(value="COMPLAINT") COMPLAINT
+      //-       option(value="USER") USER
+      //-       option(value="DEPARTMENT") DEPARTMENT
+              
+          
+      //-     button.btn-primary(type="submit") Filter
+      //-     a.btn-secondary(href="/dashboard") Reset
+
+      .table-responsive
+        table.data-table
+          thead
+            tr
+              th Id
+              th Timestamp
+              th Actor
+              th User
+              th action
+              th Entity Type
+              th Old Value
+              th New Value
+              //- th Changes
+              th Ip Address
+              th User Agent
+              //- th Metadata
+
+              //- id         Int      @id @default(autoincrement())
+              //- userId     Int
+              //- actorId    Int? // Who performed the action (can differ from userId for admin actions)
+              //- action     String // CREATE | UPDATE | DELETE | ASSIGN | STATUS_CHANGE | RESOLVE | REJECT
+              //- entityType String // COMPLAINT | USER | DEPARTMENT
+              //- entityId   Int // ID of the affected entity
+              //- oldValue   Json? // Previous state (for updates)
+              //- newValue   Json? // New state (for updates)
+              //- ipAddress  String? // Client IP
+              //- userAgent  String? // Browser info
+              //- metadata   Json? // Additional context (e.g., { reason: "Duplicate complaint" })
+              //- createdAt  DateTime @default(now())
+
+          tbody
+            each log in auditLogs
+              tr
+                td= log.id
+                td= log.createdAt
+                td= (log.actor && log.actor.name) || "Null"
+                td= (log.user && log.user.name) || "Null"
+                td= log.action
+                td= log.entityType
+                //- td= log.oldValue
+                //- td= log.newValue
+                td= JSON.stringify(log.oldValue, null, 2)
+                td= JSON.stringify(log.newValue, null, 2)
+                //- td= log.changeText
+                //- td= log.ipAddress
+                td
+                  i [Redacted]
+                td
+                  i [Redacted]
+                //- td
+                //-   i [Redacted]
+                //- td= log.userAgent
+                //- td= log.metadata
+
+          //- tbody
+          //-   each complaint in complaints
+          //-     tr
+          //-       td= complaint.id
+          //-       td= complaint.referenceNo
+          //-       td.table-title= complaint.title
+          //-       td
+          //-         span(class=`priority-badge ${complaint.priority.toLowerCase()}`)= complaint.priority
+          //-       td
+          //-         span(class=`status-badge ${complaint.status.toLowerCase()}`)= complaint.status
+          //-       td= complaint.complainant ? (complaint.complainant.fullname || complaint.complainant.name) : "N/A"
+          //-       td= complaint.assignedDepartment ? complaint.assignedDepartment.name : "Unassigned"
+          //-       td= complaint.assignedTo ? (complaint.assignedTo.fullname || complaint.assignedTo.name) : "Unassigned"
+          //-       td.actions
+          //-         a.action-btn.view(href=`/complaints/${complaint.id}`) Edit
+          //-         if filters.isDeleted
+          //-           a.action-btn.restore(href=`/complaints/restore/${complaint.id}` data-name=`${complaint.referenceNo}`) Restore
+          //-         else
+          //-           a.action-btn.delete(href=`/complaints/delete/${complaint.id}` data-name=`${complaint.referenceNo}`) Delete
+
+
+
+  script(src="/js/dashboard.js" type="module")
+  include ../partials/toast
+  include ../partials/footer

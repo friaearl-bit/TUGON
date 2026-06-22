@@ -58,18 +58,12 @@ block content
                   )
                     i(data-lucide="edit-2")
                     | Edit
-                  //- button.user-action-btn(type="button")
-                  //-   i(data-lucide="edit-2")
-                  //-   | Edit
+
                 else
                   //- button.user-action-btn(type="button" onclick="openProfileModal(#{user.id}, true)")
                   button.user-action-btn.js-open-profile( type="button" data-user-id=user.id data-view-only=(user.role === 'SUPERADMIN' || currentUser.role !== 'SUPERADMIN'))
                     i(data-lucide="eye")
                     | View
-                  //- button.user-action-btn(type="button")
-                  //-   i(data-lucide="eye")
-                  //-   | View
-
 
               .user-card-body
                 .user-detail
@@ -99,9 +93,9 @@ block content
               //-       | View
 
         //- User Profile Modal
-        //- .user-profile-modal(id="userProfileModal" aria-hidden="true")
+        //- .user-profile-modal#userProfileModal" aria-hidden="true")
         //- #userProfileModal
-        
+
         //- User Profile Modal - Clean Structure
 
         #userProfileModal.user-profile-modal(aria-hidden="true")
@@ -111,82 +105,92 @@ block content
               button.user-profile-close(type="button" aria-label="Close")
                 i(data-lucide="x")
             .user-profile-body
-              .profile-section
-                .modal-profile-avatar(id="profileAvatar")= (user && user.name) ? user.name.slice(0,2) : ''
+              // =========================
+              // BASIC INFO (Always visible)
+              // =========================
+              .profile-section(style="display: flex; gap: 1rem;")
+                .profile-avatar#profileAvatar(style="width: 3.6rem; height: 3.6rem;")
+                .profile-field
+                  .profile-field-value#profileFullName
+                  .profile-field-value#profileUsername(style="font-weight: 400; color: var(--text-soft);")
 
-                .profile-info
-                //- span.profile-name John Doe
-                //- span.profile-role Administrator
-                //- span.profile-name= user.name
-                //- span.profile-role= user.role
-                .profile-field
-                  //- .profile-field-label Full Name
-                  .profile-field-value(id="profileFullName")= user.fullname || user.name
-                .profile-field
-                  //- .profile-field-label Full Name
-                  .profile-field-value(id="profileEmail")
-                  //- = user.fullname || user.name
+              // =========================
+              // CONTACT INFO
+              // =========================
               .profile-section
-                .profile-section-title Personal Information
+                .profile-section-title Contact Information
                 .profile-field
-                  .profile-field-label Username
-                  .profile-field-value(id="profileUsername")= user.username || "N/A"
-                .profile-field
-                  .profile-field-label First Name
-                  .profile-field-input(id="profileFirstName" type="text" disabled)= user.firstName || "N/A"
-                .profile-field
-                  .profile-field-label Middle Name
-                  .profile-field-input(id="profileMiddleName" type="text" disabled)= user.middleName || "N/A"
-                .profile-field
-                  .profile-field-label Last Name
-                  .profile-field-input(id="profileLastName" type="text" disabled)= user.lastName || "N/A"
+                  .profile-field-label Email
+                  input.profile-field-input#profileEmail(type="email" disabled=!(currentUser.role === 'SUPERADMIN'))
                 .profile-field
                   .profile-field-label Contact Number
-                  .profile-field-input(id="profileContactNumber" type="tel" disabled)= user.contactNumber || "N/A"
+                  input.profile-field-input#profileContactNumber(type="tel" disabled=!(currentUser.role === 'SUPERADMIN'))
                 .profile-field
                   .profile-field-label Address
-                  .profile-field-input(id="profileAddress" type="text" disabled)= user.address || "N/A"
+                  input.profile-field-input#profileAddress(type="text" disabled=!(currentUser.role === 'SUPERADMIN'))
+
+              // =========================
+              // NAME DETAILS
+              // =========================
+              .profile-section
+                .profile-section-title Name Details
+                .profile-field
+                  .profile-field-label First Name
+                  input.profile-field-input#profileFirstName(type="text" disabled=!(currentUser.role === 'SUPERADMIN'))
+
+                .profile-field
+                  .profile-field-label Middle Name
+                  input.profile-field-input#profileMiddleName(type="text" disabled=!(currentUser.role === 'SUPERADMIN'))
+                .profile-field
+                  .profile-field-label Last Name
+                  input.profile-field-input#profileLastName(type="text" disabled=!(currentUser.role === 'SUPERADMIN'))
+
+              // =========================
+              // ACCOUNT SETTINGS (SUPERADMIN only)
+              // =========================
               .profile-section
                 .profile-section-title Account Settings
                 .profile-field
                   .profile-field-label Role
                   if currentUser.role === 'SUPERADMIN'
-                    select.profile-select(id="profileRole")
+                    select.profile-select#profileRole
                       option(value="CITIZEN") Citizen
                       option(value="ADMIN") Admin
                       option(value="SUPERADMIN") Superadmin
                   else
-                    .profile-field-value(id="profileRoleDisplay")
+                    .profile-field-value#profileRoleDisplay
                 .profile-field
                   .profile-field-label Department
                   if currentUser.role === 'SUPERADMIN'
-                    select.profile-select(id="profileDepartment")
+                    select.profile-select#profileDepartment
                       option(value="") None
                       each dept in departments
                         option(value=dept.id)= dept.name
                   else
-                    .profile-field-value(id="profileDepartmentDisplay")
+                    .profile-field-value#profileDepartmentDisplay
                 .profile-field
                   .profile-field-label Status
                   if currentUser.role === 'SUPERADMIN'
                     .profile-toggle
-                      input(type="checkbox" id="profileStatusToggle")
+                      input#profileStatusToggle(type="checkbox")
                       label(for="profileStatusToggle")
                         span.toggle-text Active
                   else
-                    .user-status(id="profileStatusDisplay" class=user.isActive ? "active" : "inactive")= user.isActive ? "Active" : "Inactive"
-              if currentUser.role === 'SUPERADMIN'
-        .profile-actions
-          button.btn.btn-secondary(type="button" data-action="close") Cancel
-          button.btn.btn-primary(type="button" data-action="save")
-            i(data-lucide="check")
-            | Save Changes
+                    .user-status#profileStatusDisplay(class=user.isActive ? "active" : "inactive")= user.isActive ? "Active" : "Inactive"
 
+              // =========================
+              // ACTIONS (SUPERADMIN only)
+              // =========================
+              if currentUser.role === 'SUPERADMIN'
+                .profile-actions
+                  button.btn.btn-secondary(type="button" data-action="close") Cancel
+                  button.btn.btn-primary(type="button" data-action="save" data-user-id=user.id)
+                    i(data-lucide="check")
+                    | Save Changes
   //- script(src="/js/chart.umd.min.js")
   //- script(src="/js/chart.umd.min.js")
   
+  script(src="/js/users.js")
+  //- script(src="/js/users.js" type="module")
   script(src="/js/toast.js")
   include ../partials/footer
-  //- script(src="/js/users.js")
-
-  script(src="/js/users.js" type="module")
