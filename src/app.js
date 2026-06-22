@@ -97,7 +97,7 @@ import uploadRoutes from "./routes/upload.routes.js";
 import reportsRouter from "./routes/reports.routes.js";
 
 import { StatusCodes } from "http-status-codes";
-// import adminRoutes from "./routes/admin.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 // import staffRoutes from "./routes/staff.routes.js";
 
 // Routes
@@ -116,7 +116,7 @@ app.use("/dashboard", dashboardRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/admin/reports", reportsRouter);
-// app.use("/admin", adminRoutes);
+app.use("/admin", adminRoutes);
 // app.use("/staff", staffRoutes);
 
 // 404 Handler
@@ -131,7 +131,7 @@ app.use((err, req, res, next) => {
     message:
       process.env.NODE_ENV === "development" ? err.message : "Server Error",
     backUrl: req.get("referer") || req.headers.referer || "/dashboard",
-    StatusCode: err.status,
+    statusCode: err.status,
   });
 });
 

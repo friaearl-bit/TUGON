@@ -6,6 +6,7 @@ import { logger } from "../utils/logger.js";
 import { SYSTEM_MESSAGES } from "../config/messages.js";
 import { addToast, addFlash } from "../utils/toast.js";
 import { notify } from "../services/notification.service.js";
+import { createAuditLog } from "../services/audit.service.js";
 import {
   ComplaintCategory,
   MAX_COMPLAINTS,
@@ -45,7 +46,7 @@ export async function showForm(req, res) {
 export async function createComplaint(req, res) {
   try {
     console.log("BODY: ", req.body);
-    console.log("FILES: ", req.fies);
+    console.log("FILES: ", req.files);
     logger.debug(
       {
         userId: req.user?.id,
@@ -140,18 +141,68 @@ export async function createComplaint(req, res) {
     );
     console.log("Has attachments?", "attachments" in prisma.complaint);
     console.log("complaintAttachment type:", typeof prisma.complaintAttachment);
+    // if (req.files && req.files.length > 0) {
+    //   await prisma.complaintAttachment.createMany({
+    //     data: req.files.map((file) => ({
+    //       complaintId: complaint.id,
+    //       filename: file.filename,
+    //       originalName: file.originalname,
+    //       mimeType: file.mimetype,
+    //       size: file.size,
+    //     })),
+    //   });
+    // }
+
     if (req.files && req.files.length > 0) {
-      await prisma.complaintAttachment.createMany({
-        data: req.files.map((file) => ({
-          complaintId: complaint.id,
-          filename: file.filename,
-          originalName: file.originalname,
-          mimeType: file.mimetype,
-          size: file.size,
-        })),
-      });
+      // Process each file individually (instead of createMany)
+      for (const file of req.files) {
+        // 1. Create the attachment
+        const attachment = await prisma.complaintAttachment.create({
+          data: {
+            complaintId: complaint.id,
+            filename: file.filename,
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
+          },
+        });
+
+        // 2. Create audit log for this attachment
+        await createAuditLog({
+          actorId: req.user.id, // Who uploaded it
+          userId: complaint.complainantId || complaint.createdById, // Complaint owner
+          action: "ATTACHMENT_UPLOAD",
+          entityType: "ATTACHMENT",
+          entityId: attachment.id, // The created attachment ID
+          newValue: {
+            filename: file.filename,
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
+            complaintId: complaint.id,
+          },
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent"),
+        });
+      }
     }
 
+    // Log after creating the complaint
+    await createAuditLog({
+      actorId: req.user.id, // Who created it
+      userId: complaint.complainantId || complaint.createdById, // Who it affects
+      action: "CREATE",
+      entityType: "COMPLAINT",
+      entityId: complaint.id,
+      newValue: {
+        referenceNo: complaint.referenceNo,
+        category: complaint.category,
+        status: complaint.status,
+        priority: complaint.priority,
+      },
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent"),
+    });
     await notifyComplaintCreated({
       complaint,
       user: req.user,
@@ -351,9 +402,19 @@ export async function updateComplaint(req, res) {
           new: req.body.priority,
         });
 
+        await createAuditLog({
+          actorId: req.user.id,
+          userId: complaint.complainantId || complaint.createdById,
+          action: "PRIORITY_CHANGE",
+          entityId: complaint.id,
+          oldValue: { priority: oldPriority },
+          newValue: { priority: req.body.priority },
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent"),
+        });
         await notifyComplaintPriorityChange({
           complaint,
-          actorId: user.id,
+          actorId: req.user.id,
           newPriority: req.body.priority,
           oldPriority: oldPriority,
         });
@@ -361,9 +422,33 @@ export async function updateComplaint(req, res) {
 
       // Status change
       if (req.body.status && req.body.status !== complaint.status) {
+        // Validate transition
+        if (!canTransition(complaint.status, req.body.status)) {
+          addToast(req, res, {
+            type: "warn",
+            title: "Update Failed",
+            message: `Invalid status transition: ${complaint.status} → ${req.body.status}`,
+          });
+
+          return res.redirect(`/complaints/${complaintId}`);
+
+          // return res.status(400).json({
+          //   error: `Invalid status transition: ${complaint.status} → ${req.body.status}`,
+          // });
+        }
         data.status = req.body.status;
         changes.push({ type: "status", old: oldStatus, new: req.body.status });
 
+        await createAuditLog({
+          actorId: user.id,
+          userId: complaint.complainantId || complaint.createdById,
+          action: "STATUS_CHANGE",
+          entityId: complaint.id,
+          oldValue: { status: oldStatus },
+          newValue: { status: req.body.status },
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent"),
+        });
         // Trigger status change notification
         await notifyComplaintStatusChange({
           complaint,
@@ -393,6 +478,19 @@ export async function updateComplaint(req, res) {
         data.assignedById = user.id;
         changes.push({ type: "assignment", staff: newStaff });
 
+        await createAuditLog({
+          actorId: user.id,
+          userId: complaint.complainantId || complaint.createdById,
+          action: "ASSIGN",
+          entityId: complaint.id,
+          oldValue: {
+            assignedToId: complaint.assignedToId,
+            assignedDepartmentId: complaint.assignedDepartmentId,
+          },
+          newValue: { assignedToId: newStaff, assignedDepartmentId: newDept },
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent"),
+        });
         // Trigger assignment notification
         await notifyComplaintAssignment({
           complaint,
@@ -407,6 +505,18 @@ export async function updateComplaint(req, res) {
         data.resolutionNotes = req.body.resolutionNotes;
         data.resolvedAt = new Date();
 
+        await createAuditLog({
+          actorId: user.id,
+          userId: complaint.complainantId || complaint.createdById,
+          action: "RESOLVE",
+          entityId: complaint.id,
+          newValue: {
+            status: "RESOLVED",
+            resolutionNotes: req.body.resolutionNotes,
+          },
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent"),
+        });
         await notifyComplaintResolved({
           complaint,
           actorId: user.id,
@@ -418,6 +528,18 @@ export async function updateComplaint(req, res) {
       if (req.body.status === "REJECTED" && req.body.rejectionReason) {
         data.rejectionNotes = req.body.rejectionReason;
 
+        await createAuditLog({
+          actorId: user.id,
+          userId: complaint.complainantId || complaint.createdById,
+          action: "REJECT",
+          entityId: complaint.id,
+          newValue: {
+            status: "REJECTED",
+            rejectionNotes: req.body.rejectionReason,
+          },
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent"),
+        });
         await notifyComplaintRejected({
           complaint,
           actorId: user.id,
@@ -440,6 +562,16 @@ export async function updateComplaint(req, res) {
         data.status = req.body.status;
         changes.push({ type: "status", old: oldStatus, new: req.body.status });
 
+        await createAuditLog({
+          actorId: user.id,
+          userId: complaint.complainantId || complaint.createdById,
+          action: "STATUS_CHANGE",
+          entityId: complaint.id,
+          oldValue: { status: oldStatus },
+          newValue: { status: req.body.status },
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent"),
+        });
         await notifyComplaintStatusChange({
           complaint,
           actorId: user.id,
@@ -452,6 +584,18 @@ export async function updateComplaint(req, res) {
           data.resolutionNotes = req.body.resolutionNotes;
           data.resolvedAt = new Date();
 
+          await createAuditLog({
+            actorId: user.id,
+            userId: complaint.complainantId || complaint.createdById,
+            action: "RESOLVE",
+            entityId: complaint.id,
+            newValue: {
+              status: "RESOLVED",
+              resolutionNotes: req.body.resolutionNotes,
+            },
+            ipAddress: req.ip,
+            userAgent: req.get("User-Agent"),
+          });
           await notifyComplaintResolved({
             complaint,
             actorId: user.id,
@@ -461,8 +605,33 @@ export async function updateComplaint(req, res) {
 
         // Rejection handling
         if (req.body.status === "REJECTED" && req.body.rejectionReason) {
+          // Validate transition
+          if (!canTransition(complaint.status, req.body.status)) {
+            addToast(req, res, {
+              type: "warn",
+              title: "Update Failed",
+              message: `Invalid status transition: ${complaint.status} → ${req.body.status}`,
+            });
+
+            return res.redirect(`/complaints/${complaintId}`);
+            // return res.status(400).json({
+            //   error: `Invalid status transition: ${complaint.status} → ${req.body.status}`,
+            // });
+          }
           data.rejectionNotes = req.body.rejectionReason;
 
+          await createAuditLog({
+            actorId: user.id,
+            userId: complaint.complainantId || complaint.createdById,
+            action: "REJECT",
+            entityId: complaint.id,
+            newValue: {
+              status: "REJECTED",
+              rejectionNotes: req.body.rejectionReason,
+            },
+            ipAddress: req.ip,
+            userAgent: req.get("User-Agent"),
+          });
           await notifyComplaintRejected({
             complaint,
             actorId: user.id,
@@ -480,6 +649,16 @@ export async function updateComplaint(req, res) {
           new: req.body.priority,
         });
 
+        await createAuditLog({
+          actorId: user.id,
+          userId: complaint.complainantId || complaint.createdById,
+          action: "PRIORITY_CHANGE",
+          entityId: complaint.id,
+          oldValue: { priority: oldPriority },
+          newValue: { priority: req.body.priority },
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent"),
+        });
         await notifyComplaintPriorityChange({
           complaint,
           actorId: user.id,
@@ -537,6 +716,7 @@ export async function updateComplaint(req, res) {
   } catch (err) {
     logger.error({ err: err.message }, "Update failed");
     return res.status(500).render("error", {
+      statusCode: 500,
       message: "Update failed",
       err,
     });
@@ -634,6 +814,21 @@ export async function deleteComplaint(req, res) {
       },
     });
 
+    await createAuditLog({
+      actorId: user.id, // Who deleted it
+      userId: complaint.complainantId || complaint.createdById, // Complaint owner
+      action: "DELETE",
+      entityType: "COMPLAINT",
+      entityId: complaint.id,
+      oldValue: {
+        referenceNo: complaint.referenceNo,
+        status: complaint.status,
+        category: complaint.category,
+      },
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent"),
+    });
+
     addToast(req, res, {
       type: "success",
       title: "Success",
@@ -701,6 +896,21 @@ export async function restoreComplaint(req, res) {
       },
     });
 
+    await createAuditLog({
+      actorId: user.id, // Who restored it
+      userId: complaint.complainantId || complaint.createdById, // Complaint owner
+      action: "RESTORE",
+      entityType: "COMPLAINT",
+      entityId: complaint.id,
+      newValue: {
+        referenceNo: complaint.referenceNo,
+        status: complaint.status,
+        category: complaint.category,
+      },
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent"),
+    });
+
     addToast(req, res, {
       type: "success",
       title: "Success",
@@ -754,6 +964,21 @@ export async function hardDeleteComplaint(req, res) {
 
     await prisma.complaint.delete({
       where: { id: complaintId },
+    });
+
+    await createAuditLog({
+      actorId: user.id, // Who deleted it
+      userId: complaint.complainantId || complaint.createdById, // Complaint owner
+      action: "HARD DELETE",
+      entityType: "COMPLAINT",
+      entityId: complaint.id,
+      oldValue: {
+        referenceNo: complaint.referenceNo,
+        status: complaint.status,
+        category: complaint.category,
+      },
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent"),
     });
 
     addToast(req, res, {

@@ -4,6 +4,7 @@ import { prisma } from "../config/prisma.js";
 import { logger } from "../utils/logger.js";
 import { SYSTEM_MESSAGES } from "../config/messages.js";
 import { addToast, addFlash } from "../utils/toast.js";
+import { createAuditLog } from "../services/audit.service.js";
 
 export async function updateProfile(req, res) {
   console.log("PARAMS:", req.params);
@@ -85,7 +86,6 @@ export async function showProfileEditForm(req, res) {
  * List all users with filtering
  * Access: ADMIN (view only), SUPERADMIN (view + manage)
  */
-// export const listUsers = async (req, res) => {
 export const listUsers = async (req, res) => {
   try {
     const { search, role, department } = req.query;
@@ -181,26 +181,31 @@ export const getUser = async (req, res) => {
   }
 };
 
-/**
- * Update user (SUPERADMIN only)
- */
+// Update user profile
 export const updateUser = async (req, res) => {
   try {
     const userId = Number(req.params.id);
     const currentUser = req.user;
 
     if (currentUser.role !== "SUPERADMIN") {
-      return res
-        .status(403)
-        .json({ error: "Only Superadmin can update users" });
+      return res.status(403).json({
+        error: "Only Superadmin can update users",
+      });
     }
 
     if (userId === currentUser.id) {
-      return res.status(400).json({ error: "Cannot modify own account" });
+      return res.status(400).json({
+        error: "Cannot modify own account",
+      });
     }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
 
     const {
       firstName,
+      middleName,
       lastName,
       fullname,
       email,
@@ -212,10 +217,53 @@ export const updateUser = async (req, res) => {
       isActive,
     } = req.body;
 
+    const changes = {};
+
+    if (firstName !== existingUser.firstName) changes.firstName = firstName;
+
+    if (middleName !== existingUser.middleName) changes.middleName = middleName;
+
+    if (lastName !== existingUser.lastName) changes.lastName = lastName;
+
+    if (email !== existingUser.email) changes.email = email;
+
+    if (contactNumber !== existingUser.contactNumber)
+      changes.contactNumber = contactNumber;
+
+    if (address !== existingUser.address) changes.address = address;
+
+    if (username !== existingUser.username) changes.username = username;
+
+    if (role !== existingUser.role) changes.role = role;
+
+    if (Number(departmentId || null) !== existingUser.departmentId) {
+      changes.departmentId = departmentId ? Number(departmentId) : null;
+    }
+
+    if (Boolean(isActive) !== existingUser.isActive) {
+      changes.isActive = Boolean(isActive);
+    }
+
+    if (!existingUser) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    if (Object.keys(changes).length === 0) {
+      addToast(req, res, {
+        type: "info",
+        title: "No Changes",
+        message: "No changes were detected.",
+      });
+      return res.redirect(`/user/list`);
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         firstName,
+        middleName,
         lastName,
         fullname,
         email,
@@ -224,201 +272,47 @@ export const updateUser = async (req, res) => {
         username,
         role,
         departmentId: departmentId ? Number(departmentId) : null,
-        isActive: Boolean(isActive),
+        isActive:
+          typeof isActive === "boolean" ? isActive : isActive === "true",
       },
     });
 
-    res.json({ success: true, user: updatedUser });
+    // await createNotification({
+    //   userId: updatedUser.id,
+    //   title: "Account Updated",
+    //   message: "Your account details were updated by a Superadmin.",
+    //   type: "INFO",
+    // });
+
+    // Set toast in cookie
+    addToast(req, res, {
+      type: "success",
+      title: "Success",
+      message: "User profile updated successfully.",
+    });
+
+    await createAuditLog({
+      actorId: currentUser.id,
+      userId: updatedUser.id,
+      action: "USER_UPDATE",
+      entityType: "USER",
+      entityId: updatedUser.id,
+      oldValue: existingUser,
+      newValue: updatedUser,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent"),
+    });
+
+    return res.json({
+      success: true,
+      user: updatedUser,
+    });
+    // return res.redirect(`/user/list`);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 };
-
-// export { updateUser };
-
-// export const updateUser = async (req, res) => {
-//   try {
-//     const userId = Number(req.params.id);
-//     const currentUser = req.user;
-
-//     // SUPERADMIN only
-//     if (currentUser.role !== "SUPERADMIN") {
-//       return res.status(403).json({
-//         error: "Only Superadmin can update users",
-//       });
-//     }
-
-//     // Prevent self-modification of role/status
-//     if (userId === currentUser.id) {
-//       return res.status(400).json({
-//         error: "Cannot modify your own account. Contact another Superadmin.",
-//       });
-//     }
-
-//     const {
-//       firstName,
-//       lastName,
-//       fullname,
-//       email,
-//       contactNumber,
-//       address,
-//       username,
-//       role,
-//       departmentId,
-//       isActive,
-//     } = req.body;
-
-//     const user = await prisma.user.findUnique({ where: { id: userId } });
-//     if (!user) {
-//       return res.status(404).json({ error: "User not found" });
-//     }
-
-//     // Update user
-//     const updatedUser = await prisma.user.update({
-//       where: { id: userId },
-//       data: {
-//         firstName,
-//         lastName,
-//         fullname,
-//         email,
-//         contactNumber,
-//         address,
-//         username,
-//         role,
-//         departmentId: departmentId ? Number(departmentId) : null,
-//         isActive: isActive === true || isActive === "true",
-//       },
-//     });
-
-//     res.json({
-//       success: true,
-//       user: updatedUser,
-//       message: "User updated successfully",
-//     });
-//   } catch (error) {
-//     console.error("Update user error:", error);
-//     res.status(500).json({ error: "Failed to update user: " + error.message });
-//   }
-// };
-
-/**
- * Create new user (SUPERADMIN only)
- */
-// export const createUser = async (req, res) => {
-//   try {
-//     // In users.controller.js
-//     export const updateUser = async (req, res) => {
-//       try {
-//         const userId = Number(req.params.id);
-//         const currentUser = req.user;
-
-//         // 1. Check permissions (SUPERADMIN only)
-//         if (currentUser.role !== "SUPERADMIN") {
-//           return res.status(403).json({ error: "Unauthorized" });
-//         }
-
-//         // 2. Prevent self-modification
-//         if (userId === currentUser.id) {
-//           return res.status(400).json({ error: "Cannot modify own account" });
-//         }
-
-//         // 3. Extract data from request
-//         const {
-//           firstName,
-//           lastName,
-//           fullname,
-//           email,
-//           contactNumber,
-//           address,
-//           username,
-//           role,
-//           departmentId,
-//           isActive,
-//         } = req.body;
-
-//         // 4. Update database via Prisma
-//         const updatedUser = await prisma.user.update({
-//           where: { id: userId },
-//           data: {
-//             firstName,
-//             lastName,
-//             fullname,
-//             email,
-//             contactNumber,
-//             address,
-//             username,
-//             role,
-//             departmentId: departmentId ? Number(departmentId) : null,
-//             isActive: Boolean(isActive),
-//           },
-//         });
-
-//         // 5. Return success
-//         res.json({
-//           success: true,
-//           user: updatedUser,
-//           message: "User updated successfully",
-//         });
-//       } catch (error) {
-//         res.status(500).json({ error: error.message });
-//       }
-//     };
-//     const currentUser = req.user;
-
-//     if (currentUser.role !== "SUPERADMIN") {
-//       return res
-//         .status(403)
-//         .json({ error: "Only Superadmin can create users" });
-//     }
-
-//     const {
-//       firstName,
-//       lastName,
-//       fullname,
-//       email,
-//       contactNumber,
-//       address,
-//       username,
-//       password,
-//       role,
-//       departmentId,
-//     } = req.body;
-
-//     // Check if email exists
-//     const existingUser = await prisma.user.findUnique({
-//       where: { email: email.toLowerCase() },
-//     });
-//     if (existingUser) {
-//       return res.status(400).json({ error: "Email already exists" });
-//     }
-
-//     // Hash password
-//     const bcrypt = await import("bcrypt");
-//     const hashedPassword = await bcrypt.hash(password, 10);
-
-//     const newUser = await prisma.user.create({
-//       data: {
-//         firstName,
-//         lastName,
-//         fullname,
-//         email: email.toLowerCase(),
-//         contactNumber,
-//         address,
-//         username,
-//         password: hashedPassword,
-//         role,
-//         departmentId: departmentId ? Number(departmentId) : null,
-//         isActive: true,
-//       },
-//     });
-
-//     res.json({
-//       success: true,
-//       user: newUser,
-//       message: "User created successfully",
-//     });
-//   } catch (error) {
-//     console.error("Create user error:", error);
-//     res.status(500).json({ error: "Failed to create user: " + error.message });
-//   }
-// };

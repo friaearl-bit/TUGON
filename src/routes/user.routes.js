@@ -32,6 +32,7 @@ router.get(
 
 // Get single user for modal
 router.get("/:id", requireAuth, getUser);
+router.put("/:id", requireAuth, updateUser);
 
 // Update user - SUPERADMIN only
 router.post("/:id", requireAuth, requireRole("SUPERADMIN"), updateUser);

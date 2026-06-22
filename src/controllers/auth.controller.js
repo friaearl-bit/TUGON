@@ -5,6 +5,7 @@ import { env } from "../config/env.js";
 import { generateSessionId } from "../utils/session.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { logger } from "../utils/logger.js";
+import { createAuditLog } from "../services/audit.service.js";
 import { addToast, addFlash } from "../utils/toast.js";
 
 import bcrypt from "bcrypt";
@@ -15,18 +16,63 @@ export async function login(req, res, next) {
 
     if (!email || !password) {
       addFlash(req, res, [{ message: "Missing fields" }]);
+      await createAuditLog({
+        actorId: null,
+        userId: null, // Sentinel value for "no user"
+        action: "LOGIN_FAILED",
+        entityType: "AUTH",
+        entityId: null, // Sentinel value for "no entity"
+        newValue: {
+          attemptedEmail: req.body.email,
+          // ipAddress: req.ip,
+          // userAgent: req.get("User-Agent"),
+          reason: "Missing fields",
+        },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent"),
+      });
       return res.redirect("/auth/login");
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       addFlash(req, res, [{ message: "Invalid email or password" }]);
+      await createAuditLog({
+        actorId: null,
+        userId: null, // Sentinel value for "no user"
+        action: "LOGIN_FAILED",
+        entityType: "AUTH",
+        entityId: null, // Sentinel value for "no entity"
+        newValue: {
+          attemptedEmail: req.body.email,
+          // ipAddress: req.ip,
+          // userAgent: req.get("User-Agent"),
+          reason: "Invalid email or password",
+        },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent"),
+      });
       return res.redirect("/auth/login");
     }
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       addFlash(req, res, [{ message: "Invalid credentials" }]);
+      await createAuditLog({
+        actorId: null,
+        userId: null, // Sentinel value for "no user"
+        action: "LOGIN_FAILED",
+        entityType: "AUTH",
+        entityId: null, // Sentinel value for "no entity"
+        newValue: {
+          attemptedEmail: req.body.email,
+          // ipAddress: req.ip,
+          // userAgent: req.get("User-Agent"),
+          reason: "Invalid credentials",
+        },
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent"),
+      });
       return res.redirect("/auth/login");
     }
 
@@ -56,6 +102,20 @@ export async function login(req, res, next) {
       maxAge: env.SESSION_TTL * 1000,
     });
 
+    await createAuditLog({
+      actorId: user.id, // Who logged in
+      userId: user.id, // Same as actor for login
+      action: "LOGIN",
+      entityType: "AUTH",
+      entityId: null, // No specific entity
+      newValue: {
+        // ipAddress: req.ip,
+        // userAgent: req.get("User-Agent"),
+        sessionId: req.sessionID,
+      },
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent"),
+    });
     logger.info({ userId: user.id }, "User logged in");
     addToast(req, res, {
       type: "success",
@@ -95,12 +155,37 @@ export async function register(req, res) {
     title: "Success",
     message: "Registration completed successfully.",
   });
+  await createAuditLog({
+    actorId: user.id, // Self-registration
+    userId: user.id, // Same as actor
+    action: "USER_CREATE",
+    entityType: "USER",
+    entityId: user.id,
+    newValue: {
+      email: user.email,
+      role: user.role,
+      // departmentId: createdUser.departmentId,
+    },
+    ipAddress: req.ip,
+    userAgent: req.get("User-Agent"),
+  });
+
   return res.redirect("/auth/login");
   // res.status(201).send({ id: user.id, name: user.name, email: user.email });
 }
 
 export async function logout(req, res) {
   if (!req.session) return res.status(401).send("No session");
+
+  await createAuditLog({
+    actorId: req.user.id, // Who logged out
+    userId: req.user.id, // Same as actor
+    action: "LOGOUT",
+    entityType: "AUTH",
+    entityId: null,
+    ipAddress: req.ip,
+    userAgent: req.get("User-Agent"),
+  });
 
   await prisma.session.delete({ where: { id: req.session.id } });
   logger.info({ userId: req.user.id }, "User logged out");
