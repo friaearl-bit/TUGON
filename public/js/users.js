@@ -1,73 +1,171 @@
-// Modal Controller
-const userProfileModal = document.getElementById("userProfileModal");
-const classUserProfileModal = document.querySelector("user-profile-modal");
-
-// Open modal
 function openProfileModal(userId, viewOnly = false) {
-  userProfileModal.classList.add("show");
+  const userProfileModal = document.getElementById("userProfileModal");
+  if (!userProfileModal) return;
 
-  // Fetch user data and populate modal
-  // fetch(`/user/${userId}`)
-  //   .then((response) => response.json())
-  //   .then((user) => {
-  //     // Populate modal fields
-  //     document.getElementById("profileAvatar").textContent =
-  //       (user.firstName?.charAt(0) || "") +
-  //       (user.lastName?.charAt(0) || user.name?.charAt(0) || "U");
-  //     document.getElementById("profileFullName").textContent =
-  //       user.fullname ||
-  //       user.name ||
-  //       `${user.firstName || ""} ${user.lastName || ""}` ||
-  //       "Unknown";
-  //     document.getElementById("profileEmail").textContent =
-  //       user.email || "No email";
-  //     document.getElementById("profileUsername").textContent =
-  //       user.username || "N/A";
+  fetch(`/user/${userId}`)
+    .then((response) => response.json())
+    .then((data) => {
+      const user = data.user;
+      const departments = data.departments;
+      const canEdit = data.canEdit && !viewOnly;
 
-  //     if (viewOnly || user.role !== "SUPERADMIN") {
-  //       // View only mode
-  //       document.getElementById("profileFirstName").value =
-  //         user.firstName || "";
-  //       document.getElementById("profileMiddleName").value =
-  //         user.middleName || "";
-  //       document.getElementById("profileLastName").value = user.lastName || "";
-  //       document.getElementById("profileContactNumber").value =
-  //         user.contactNumber || "";
-  //       document.getElementById("profileAddress").value = user.address || "";
-  //       document.getElementById("profileRoleDisplay").textContent =
-  //         user.role || "N/A";
-  //       document.getElementById("profileDepartmentDisplay").textContent =
-  //         user.department?.name || "None";
-  //       const statusDisplay = document.getElementById("profileStatusDisplay");
-  //       statusDisplay.className = user.isActive
-  //         ? "user-status active"
-  //         : "user-status inactive";
-  //       statusDisplay.textContent = user.isActive ? "Active" : "Inactive";
-  //     } else {
-  //       // Edit mode
-  //       document.getElementById("profileFirstName").value =
-  //         user.firstName || "";
-  //       document.getElementById("profileMiddleName").value =
-  //         user.middleName || "";
-  //       document.getElementById("profileLastName").value = user.lastName || "";
-  //       document.getElementById("profileContactNumber").value =
-  //         user.contactNumber || "";
-  //       document.getElementById("profileAddress").value = user.address || "";
-  //       document.getElementById("profileRole").value = user.role || "CITIZEN";
-  //       document.getElementById("profileDepartment").value =
-  //         user.departmentId || "";
-  //       document.getElementById("profileStatusToggle").checked = user.isActive;
-  //     }
+      // === SAFETY WRAPPERS ===
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || "";
+      };
+      const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value || "";
+      };
+      const setChecked = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = Boolean(value);
+      };
+      const setClass = (id, className) => {
+        const el = document.getElementById(id);
+        if (el) el.className = className;
+      };
 
-  //     // Show modal
-  //     userProfileModal.classList.add("show");
-  //     userProfileModal.setAttribute("aria-hidden", "false");
-  //     document.body.style.overflow = "hidden";
-  //   });
+      // === AVATAR ===
+      let initials = "U";
+      if (user.firstName && user.lastName) {
+        initials = (
+          user.firstName.charAt(0) + user.lastName.charAt(0)
+        ).toUpperCase();
+      } else if (user.name) {
+        const words = user.name.trim().split(/\s+/).filter(Boolean);
+        initials = words
+          .slice(0, 2)
+          .map((w) => w.charAt(0).toUpperCase())
+          .join("");
+      } else if (user.fullname) {
+        const words = user.fullname.trim().split(/\s+/).filter(Boolean);
+        initials = words
+          .slice(0, 2)
+          .map((w) => w.charAt(0).toUpperCase())
+          .join("");
+      }
+      setText("profileAvatar", initials);
+
+      // === DISPLAY FIELDS (use setText) ===
+      const fullName =
+        user.fullname ||
+        user.name ||
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+        "Unknown";
+      setText("profileFullName", fullName);
+      setText("profileUsername", user.username || "N/A");
+
+      // === INPUT FIELDS (use setValue) ===
+      setValue("profileFirstName", user.firstName || "");
+      setValue("profileMiddleName", user.middleName || "");
+      setValue("profileLastName", user.lastName || "");
+      setValue("profileEmail", user.email || "");
+      setValue("profileContactNumber", user.contactNumber || "");
+      setValue("profileAddress", user.address || "");
+
+      // === ACCOUNT SETTINGS ===
+      if (canEdit) {
+        setValue("profileRole", user.role || "CITIZEN");
+        const deptSelect = document.getElementById("profileDepartment");
+        if (deptSelect && departments) {
+          deptSelect.innerHTML =
+            '<option value="">None</option>' +
+            departments
+              .map((d) => `<option value="${d.id}">${d.name}</option>`)
+              .join("");
+          deptSelect.value = user.departmentId || "";
+        }
+        setChecked("profileStatusToggle", user.isActive || false);
+      } else {
+        setText("profileRoleDisplay", user.role || "N/A");
+        setText("profileDepartmentDisplay", user.department?.name || "None");
+        const statusDisplay = document.getElementById("profileStatusDisplay");
+        if (statusDisplay) {
+          statusDisplay.textContent = user.isActive ? "Active" : "Inactive";
+          statusDisplay.className = user.isActive
+            ? "user-status active"
+            : "user-status inactive";
+        }
+      }
+
+      // === SHOW MODAL ===
+      userProfileModal.classList.add("show");
+      userProfileModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+
+      document
+        .querySelector('[data-action="save"]')
+        ?.addEventListener("click", () => {
+          updateUser(userId);
+        });
+    })
+    .catch((error) => console.error("Error loading user:", error));
+}
+
+async function updateUser(userId) {
+  try {
+    const payload = {
+      firstName: document.getElementById("profileFirstName").value,
+      middleName: document.getElementById("profileMiddleName").value,
+      lastName: document.getElementById("profileLastName").value,
+
+      email: document.getElementById("profileEmail").value,
+      contactNumber: document.getElementById("profileContactNumber").value,
+      address: document.getElementById("profileAddress").value,
+
+      username: document.getElementById("profileUsername").textContent,
+
+      role: document.getElementById("profileRole")?.value,
+
+      departmentId: document.getElementById("profileDepartment")?.value || null,
+
+      isActive: document.getElementById("profileStatusToggle")?.checked,
+    };
+
+    payload.fullname = [payload.firstName, payload.middleName, payload.lastName]
+      .filter(Boolean)
+      .join(" ");
+
+    const response = await fetch(`/user/${userId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to update user");
+    }
+
+    // showToast({
+    //   type: "success",
+    //   title: "User Updated",
+    //   message: "User information was updated successfully.",
+    // });
+
+    closeUserProfileModal();
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 800);
+  } catch (error) {
+    console.error(error);
+
+    // showToast({
+    //   type: "error",
+    //   title: "Update Failed",
+    //   message: error.message,
+    // });
+  }
 }
 
 // Close modal
-function closeProfileModal() {
+function closeUserProfileModal() {
   userProfileModal.classList.remove("show");
   userProfileModal.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
@@ -76,231 +174,29 @@ function closeProfileModal() {
 // Event listeners
 userProfileModal
   .querySelector(".user-profile-close")
-  .addEventListener("click", closeProfileModal);
+  .addEventListener("click", closeUserProfileModal);
 userProfileModal.addEventListener("click", (e) => {
-  if (e.target === userProfileModal) closeProfileModal();
+  if (e.target === userProfileModal) closeUserProfileModal();
 });
 
 // Close on Escape
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeProfileModal();
+  if (e.key === "Escape") closeUserProfileModal();
 });
 
 // Button actions
 document.querySelectorAll("[data-action]").forEach((btn) => {
   btn.addEventListener("click", (e) => {
     const action = e.target.closest("[data-action]").dataset.action;
-    if (action === "close") closeProfileModal();
-    if (action === "save") saveUserChanges();
+    if (action === "close") closeUserProfileModal();
+    // if (action === "save") updateUser(userId);
   });
 });
-
-function saveUserChanges() {
-  // Save logic
-  closeProfileModal();
-}
 
 // Open modal from button click
 document.querySelectorAll(".js-open-profile").forEach((btn) => {
   btn.addEventListener("click", () => {
     const userId = btn.dataset.userId;
-    const viewOnly = btn.dataset.viewOnly === "true";
-    openProfileModal(userId, viewOnly);
+    openProfileModal(userId);
   });
 });
-
-// // =============================================
-// // MODAL STATE
-// // =============================================
-// let currentUserId = null;
-// let isViewOnly = false;
-
-// // =============================================
-// // INITIALIZE
-// // =============================================
-// document.addEventListener("DOMContentLoaded", () => {
-//   const modal = document.getElementById("userProfileModal");
-
-//   // Close modal on X button
-//   document.addEventListener("click", (e) => {
-//     if (e.target.closest(".user-profile-close")) closeProfileModal();
-//     if (e.target.closest(".btn-secondary")) closeProfileModal();
-//   });
-
-//   // Open modal on edit/view button
-//   document.addEventListener("click", (e) => {
-//     const openBtn = e.target.closest(".js-open-profile");
-//     if (openBtn) {
-//       currentUserId = Number(openBtn.dataset.userId);
-//       isViewOnly = openBtn.dataset.viewOnly === "true";
-//       openProfileModal(currentUserId, isViewOnly);
-//     }
-//   });
-
-//   // Save changes on save button
-//   document.addEventListener("click", (e) => {
-//     if (e.target.closest(".btn-primary")?.closest(".profile-actions")) {
-//       saveUserChanges();
-//     }
-//   });
-// });
-
-// // =============================================
-// // OPEN MODAL
-// // =============================================
-// async function openProfileModal(userId, viewOnly) {
-//   const modal = document.getElementById("userProfileModal");
-//   modal.classList.add("loading");
-
-//   try {
-//     const response = await fetch(`/user/${userId}`);
-//     const data = await response.json();
-
-//     if (!data.success) throw new Error(data.error || "Failed to load user");
-
-//     modal.dataset.userId = userId;
-//     modal.dataset.viewOnly = viewOnly;
-//     populateModalFields(data.user, data.departments, viewOnly);
-//     modal.style.display = "block";
-//   } catch (error) {
-//     console.error("Modal error:", error);
-//     alert(error.message);
-//   } finally {
-//     modal.classList.remove("loading");
-//   }
-// }
-
-// // =============================================
-// // POPULATE MODAL FIELDS - FIXED
-// // =============================================
-// function populateModalFields(user, departments, viewOnly) {
-//   // Always set these
-//   document.getElementById("profileFullName").textContent = user.fullname || "";
-//   document.getElementById("profileEmail").textContent = user.email || "";
-//   document.getElementById("profileUsername").textContent = user.username || "";
-//   document.getElementById("profileAvatar").textContent = getInitials(user);
-
-//   // Input fields (always exist)
-//   const firstNameInput = document.getElementById("profileFirstName");
-//   const lastNameInput = document.getElementById("profileLastName");
-//   const middleNameInput = document.getElementById("profileMiddleName");
-//   const contactInput = document.getElementById("profileContactNumber");
-//   const addressInput = document.getElementById("profileAddress");
-
-//   if (firstNameInput) firstNameInput.value = user.firstName || "";
-//   if (lastNameInput) lastNameInput.value = user.lastName || "";
-//   if (middleNameInput) middleNameInput.value = user.middleName || "";
-//   if (contactInput) contactInput.value = user.contactNumber || "";
-//   if (addressInput) addressInput.value = user.address || "";
-
-//   // Role/Department/Status - conditional
-//   if (viewOnly) {
-//     // View mode: Show display elements
-//     const roleDisplay = document.getElementById("profileRoleDisplay");
-//     const deptDisplay = document.getElementById("profileDepartmentDisplay");
-//     const statusDisplay = document.getElementById("profileStatusDisplay");
-
-//     if (roleDisplay) roleDisplay.textContent = user.role || "";
-//     if (deptDisplay) deptDisplay.textContent = user.department?.name || "None";
-//     if (statusDisplay) {
-//       statusDisplay.textContent = user.isActive ? "Active" : "Inactive";
-//       statusDisplay.className = user.isActive ? "active" : "inactive";
-//     }
-//   } else {
-//     // Edit mode: Show input elements
-//     const roleSelect = document.getElementById("profileRole");
-//     const deptSelect = document.getElementById("profileDepartment");
-//     const statusToggle = document.getElementById("profileStatusToggle");
-
-//     if (roleSelect) roleSelect.value = user.role || "";
-//     if (deptSelect) {
-//       deptSelect.innerHTML = `
-//         <option value="">None</option>
-//         ${departments.map((d) => `<option value="${d.id}">${d.name}</option>`).join("")}
-//       `;
-//       deptSelect.value = user.departmentId || "";
-//     }
-//     if (statusToggle) statusToggle.checked = Boolean(user.isActive);
-//   }
-// }
-
-// // =============================================
-// // SAVE CHANGES - FIXED
-// // =============================================
-// async function saveUserChanges() {
-//   const modal = document.getElementById("userProfileModal");
-//   const userId = Number(modal.dataset.userId);
-
-//   // Use safe accessors - check if elements exist
-//   const formData = {
-//     firstName: getValue("profileFirstName"),
-//     lastName: getValue("profileLastName"),
-//     middleName: getValue("profileMiddleName"),
-//     fullname: getText("profileFullName"),
-//     email: getText("profileEmail"),
-//     contactNumber: getValue("profileContactNumber"),
-//     address: getValue("profileAddress"),
-//     username: getText("profileUsername"),
-//     role: getValue("profileRole"),
-//     departmentId: getValue("profileDepartment"),
-//     isActive: getChecked("profileStatusToggle"),
-//   };
-
-//   try {
-//     const response = await fetch(`/user/${userId}`, {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify(formData),
-//     });
-
-//     const result = await response.json();
-//     if (result.success) {
-//       closeProfileModal();
-//       alert("User updated successfully!");
-//       location.reload();
-//     } else {
-//       alert("Error: " + result.error);
-//     }
-//   } catch (error) {
-//     console.error("Save error:", error);
-//     alert("Failed to save changes");
-//   }
-// }
-
-// // =============================================
-// // HELPER FUNCTIONS - SAFE ACCESSORS
-// // =============================================
-// function getValue(id) {
-//   const el = document.getElementById(id);
-//   return el ? el.value : null;
-// }
-
-// function getText(id) {
-//   const el = document.getElementById(id);
-//   return el ? el.textContent : null;
-// }
-
-// function getChecked(id) {
-//   const el = document.getElementById(id);
-//   return el ? el.checked : null;
-// }
-
-// function getInitials(user) {
-//   const first = user.firstName ? user.firstName.charAt(0) : "";
-//   const last = user.lastName ? user.lastName.charAt(0) : "";
-//   return (
-//     (first + last).toUpperCase() || user.name?.charAt(0).toUpperCase() || "U"
-//   );
-// }
-
-// // =============================================
-// // CLOSE MODAL
-// // =============================================
-// function closeProfileModal() {
-//   const modal = document.getElementById("userProfileModal");
-//   if (modal) {
-//     modal.style.display = "none";
-//     modal.dataset.userId = "";
-//     modal.dataset.viewOnly = "";
-//   }
-// }
