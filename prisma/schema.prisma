@@ -31,7 +31,7 @@ model User {
   email                        String               @unique
   password                     String
   role                         Role                 @default(CITIZEN)
-  isActive                     Boolean              @default(true)
+  isActive                     Boolean              @default(false)
   departmentId                 Int?
   createdAt                    DateTime             @default(now())
   updatedAt                    DateTime             @updatedAt
@@ -48,6 +48,8 @@ model User {
   sessions                     Session[]
   tokens                       Token[]
   department                   Department?          @relation(fields: [departmentId], references: [id])
+  auditLogs                    AuditLog[]           @relation("AuditLogUser")
+  auditLogActors               AuditLog[]           @relation("AuditLogActor")
 }
 
 model Complaint {
@@ -164,6 +166,29 @@ model Notification {
   meta        Json?
   complaint   Complaint?       @relation(fields: [complaintId], references: [id])
   user        User             @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  actorId    Int? // Who performed the action (can differ from userId for admin actions)
+  action     String // CREATE | UPDATE | DELETE | ASSIGN | STATUS_CHANGE | RESOLVE | REJECT
+  entityType String // COMPLAINT | USER | DEPARTMENT
+  entityId   Int? // ID of the affected entity
+  oldValue   Json? // Previous state (for updates)
+  newValue   Json? // New state (for updates)
+  ipAddress  String? // Client IP
+  userAgent  String? // Browser info
+  metadata   Json? // Additional context (e.g., { reason: "Duplicate complaint" })
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user  User? @relation("AuditLogUser", fields: [userId], references: [id])
+  actor User? @relation("AuditLogActor", fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Session {

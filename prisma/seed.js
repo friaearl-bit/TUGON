@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 async function main() {
-  console.log("🌱 Extended MCRS seeding started...");
+  console.log("🌱 Super Extended MCRS seeding started...");
 
   const hash = await bcrypt.hash("password123", 10);
 
@@ -38,46 +38,147 @@ async function main() {
   ]);
 
   const [envDept, engDept, utilDept] = departments;
+  // =========================
+  // USERS - FULL FIELDS
+  // =========================
+
+  // Helper: Generate realistic name parts
+  const firstNames = [
+    "John",
+    "Jane",
+    "Michael",
+    "Emily",
+    "David",
+    "Sarah",
+    "Robert",
+    "Jennifer",
+    "James",
+    "Lisa",
+  ];
+  const lastNames = [
+    "Smith",
+    "Johnson",
+    "Williams",
+    "Brown",
+    "Jones",
+    "Garcia",
+    "Miller",
+    "Davis",
+    "Rodriguez",
+    "Martinez",
+  ];
+  const middleNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+  const streets = [
+    "Main St",
+    "Oak Ave",
+    "Pine Rd",
+    "Maple Dr",
+    "Cedar Ln",
+    "Elm St",
+    "Birch Ave",
+    "Spruce Rd",
+  ];
+  const barangays = [
+    "Barangay 1",
+    "Barangay 2",
+    "Barangay 3",
+    "Central",
+    "North",
+    "South",
+    "East",
+    "West",
+  ];
+
+  // Helper: Generate full address
+  const generateAddress = () => {
+    const street = streets[Math.floor(Math.random() * streets.length)];
+    const barangay = barangays[Math.floor(Math.random() * barangays.length)];
+    const building = Math.floor(Math.random() * 100) + 1;
+    return `${building} ${street}, ${barangay}`;
+  };
+
+  // Helper: Generate contact number
+  const generateContactNumber = () => {
+    return `09${Math.floor(100000000 + Math.random() * 900000000)}`;
+  };
+
+  // Helper: Generate username from email
+  const generateUsername = (email) => {
+    return email.split("@")[0].replace(/\./g, "_");
+  };
 
   // =========================
-  // USERS
+  // SUPERADMIN
   // =========================
-
   const superAdmin = await prisma.user.upsert({
     where: { email: "superadmin@mcrs.com" },
     update: {},
     create: {
       name: "Super Admin",
+      firstName: "Super",
+      middleName: "A",
+      lastName: "Admin",
+      fullname: "Super A Admin",
+      username: "superadmin",
       email: "superadmin@mcrs.com",
       password: hash,
       role: "SUPERADMIN",
+      contactNumber: "09123456789",
+      address: "City Hall, Central Barangay",
+      isActive: true,
     },
   });
 
+  // =========================
+  // ADMIN
+  // =========================
   const admin = await prisma.user.upsert({
     where: { email: "admin@mcrs.com" },
     update: {},
     create: {
       name: "Admin User",
+      firstName: "Admin",
+      middleName: "B",
+      lastName: "User",
+      fullname: "Admin B User",
+      username: "admin",
       email: "admin@mcrs.com",
       password: hash,
       role: "ADMIN",
+      contactNumber: "09234567890",
+      address: "Admin Building, Main St",
+      isActive: true,
     },
   });
 
-  // STAFF (multiple per department)
+  // =========================
+  // STAFF
+  // =========================
   const staff = [];
 
   const createStaff = async (email, name, deptId) => {
+    const firstName = name.split(" ")[0];
+    const lastName = name.split(" ").slice(1).join(" ");
+    const middleName =
+      middleNames[Math.floor(Math.random() * middleNames.length)];
+
     const u = await prisma.user.upsert({
       where: { email },
       update: {},
       create: {
         name,
+        firstName,
+        middleName,
+        lastName,
+        fullname: name,
+        username: generateUsername(email),
         email,
         password: hash,
         role: "STAFF",
         departmentId: deptId,
+        contactNumber: generateContactNumber(),
+        address: generateAddress(),
+        isActive: true,
       },
     });
     staff.push(u);
@@ -100,21 +201,33 @@ async function main() {
   ]);
 
   // =========================
-  // CITIZENS (bulk)
+  // CITIZENS (with full fields)
   // =========================
-
   const citizens = [];
 
   for (let i = 1; i <= 60; i++) {
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const middleName =
+      middleNames[Math.floor(Math.random() * middleNames.length)];
+    const fullname = `${firstName} ${middleName}. ${lastName}`;
+
     const citizen = await prisma.user.upsert({
       where: { email: `citizen${i}@test.com` },
       update: {},
       create: {
         name: `Citizen ${i}`,
+        firstName,
+        middleName,
+        lastName,
+        fullname,
+        username: `citizen${i}`,
         email: `citizen${i}@test.com`,
         password: hash,
         role: "CITIZEN",
-        contactNumber: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
+        contactNumber: generateContactNumber(),
+        address: generateAddress(),
+        isActive: true,
       },
     });
     citizens.push(citizen);
@@ -290,7 +403,7 @@ async function main() {
     });
   }
 
-  console.log("✅ Extended seed completed");
+  console.log("✅ Super Extended seed completed");
 }
 
 main()
